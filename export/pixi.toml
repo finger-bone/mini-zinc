@@ -1,0 +1,16 @@
+[project]
+authors = ["Zend <zendwang040302@outlook.com>"]
+channels = ["conda-forge"]
+name = "export"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.11.*"
+
+[pypi-dependencies]
+torch = ">=2.6.0, <3"
+torchvision = ">=0.21.0, <0.22"
+pnnx = ">=20250403, <20250404"

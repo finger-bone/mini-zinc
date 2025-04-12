@@ -1,0 +1,9 @@
+[package]
+name = "mini-zinc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.97"
+ndarray = { version = "0.16.1", features = ["rayon"]}
+ocl = "0.19.7"

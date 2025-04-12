@@ -1,0 +1,1 @@
+pnnx resnet18.pt inputshape="[1,3,224,224]" pnnxparam=resnet18.pnnx.param pnnxbin=resnet18.pnnx.bin
