@@ -5,5 +5,13 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.97"
+bytemuck = "1.22.0"
+byteorder = "1.5.0"
 ndarray = { version = "0.16.1", features = ["rayon"]}
+nom = "8.0.0"
 ocl = "0.19.7"
+tempfile = "3.19.1"
+zip = { version = "2.6.1", features = ["deflate"]}
+
+[dev-dependencies]
+tempfile = "3.19.1"

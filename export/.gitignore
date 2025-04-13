@@ -8,3 +8,4 @@
 *_ncnn.py
 *_pnnx.py
 *.onnx
+*.pnnx

@@ -21,7 +21,7 @@ pub struct BatchNormConf {
     pub num_features: usize,
 }
 
-pub struct ConvConf {
+pub struct Conv2dConf {
     pub kernel_size: Vec<usize>,
     pub stride: Vec<usize>,
     pub padding: Vec<usize>,
@@ -56,6 +56,11 @@ pub struct ViewConf {
     pub output_shape: Vec<usize>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ExprConf {
+    pub expr: String,
+}
+
 pub enum ZOpConf {
     Unkown,
     ReLU(ReLUConf),
@@ -63,10 +68,11 @@ pub enum ZOpConf {
     Tanh(TanhConf),
     Softmax(SoftmaxConf),
     BatchNorm(BatchNormConf),
-    Conv(ConvConf),
+    Conv2d(Conv2dConf),
     Pool(PoolConf),
     Linear(LinearConf),
     View(ViewConf),
+    Expression(ExprConf),
 }
 
 pub trait FromZOpConf {

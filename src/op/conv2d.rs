@@ -3,12 +3,12 @@ use anyhow::{Ok, Result};
 use ocl::ProQue;
 use ndarray::ArrayD;
 
-pub struct ConvLayer {
-    pub lconf: conf::ConvConf,
+pub struct Conv2dLayer {
+    pub lconf: conf::Conv2dConf,
     pub pro_que: ProQue,
 }
 
-impl Forward for ConvLayer {
+impl Forward for Conv2dLayer {
     fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
         // Only process the first element
         let input = &input[0];
@@ -92,13 +92,13 @@ impl Forward for ConvLayer {
     }
 }
 
-impl FromZOpConf for conf::ConvConf {
+impl FromZOpConf for conf::Conv2dConf {
     fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::Conv(lconf) = zopconf else {
+        let conf::ZOpConf::Conv2d(lconf) = zopconf else {
             return Err(anyhow::anyhow!("not Conv"));
         };
         
-        Ok(Box::new(ConvLayer { 
+        Ok(Box::new(Conv2dLayer { 
             lconf, 
             pro_que: ProQue::builder().src(include_str!("./conv.cl")).dims(256).build().unwrap(),
         }))
