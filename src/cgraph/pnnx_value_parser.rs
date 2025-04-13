@@ -1,0 +1,35 @@
+use nom::character::complete::{isize, usize};
+use nom::{
+    IResult, Parser,
+    bytes::complete::tag,
+    character::complete::{alphanumeric1, digit1},
+    combinator::map_res,
+    multi::separated_list0,
+    sequence::{delimited, pair},
+};
+
+use super::pnnx_weight_reader::PNNXBinDataType;
+
+pub fn parse_shape_and_dtype(src: &str) -> IResult<&str, (Vec<usize>, PNNXBinDataType)> {
+    let parse_shape = delimited(tag("("), separated_list0(tag(","), usize), tag(")"));
+
+    let parse_dtype = map_res(alphanumeric1, |s: &str| match s {
+        "f32" => Ok(PNNXBinDataType::Float32),
+        "f16" => Ok(PNNXBinDataType::Float16),
+        _ => Err(format!("Unknown dtype: {}", s)),
+    });
+
+    pair(parse_shape, parse_dtype).parse(src)
+}
+
+pub fn parse_usize_tuple(src: &str) -> IResult<&str, Vec<usize>> {
+    delimited(tag("("), separated_list0(tag(","), usize), tag(")")).parse(src)
+}
+
+pub fn parse_usize(src: &str) -> IResult<&str, usize> {
+    usize.parse(src)
+}
+
+pub fn parse_isize(src: &str) -> IResult<&str, isize> {
+    isize.parse(src)
+}

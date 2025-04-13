@@ -1,6 +1,6 @@
 use super::{
-    conf::{self, FromZOpConf},
-    layer::Forward,
+    conf::{self, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
@@ -16,9 +16,11 @@ pub struct BatchNormLayer {
 }
 
 impl Forward for BatchNormLayer {
-    fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for BatchNorm"));
+        };
         let shape = input.shape();
         let batch_size = shape[0];
         let channels = shape[1];
@@ -94,20 +96,18 @@ impl Forward for BatchNormLayer {
             .read(output.as_slice_mut().unwrap())
             .enq()
             .unwrap();
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::BatchNormConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::BatchNorm(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not BatchNorm"));
-        };
-
+impl ToLayer for conf::BatchNormConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let lconf = self;
         // Extract channels from the configuration
         let channels = lconf.num_features;
         let gamma = ArrayD::ones(ndarray::IxDyn(&[channels]));
-        let beta = ArrayD::zeros(ndarray::IxDyn(&[channels]));
+        let beta: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<ndarray::IxDynImpl>> =
+            ArrayD::zeros(ndarray::IxDyn(&[channels]));
         let running_mean = ArrayD::zeros(ndarray::IxDyn(&[channels]));
         let running_var = ArrayD::ones(ndarray::IxDyn(&[channels]));
 

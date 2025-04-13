@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ndarray::ArrayD;
 
-use super::layer::Forward;
+use super::layer::{Forward, TensorValue};
 
 pub struct ReLUConf {
     pub threshold: f32,
@@ -28,14 +28,19 @@ pub struct Conv2dConf {
     pub dilation: Vec<usize>,
     pub groups: usize,
     pub filters: usize,
-    pub weights: ArrayD<f32>,
-    pub bias: ArrayD<f32>,
+    pub weights: TensorValue,
+    pub bias: TensorValue,
 }
 
-pub struct PoolConf {
+pub struct Pool2dConf {
     pub kernel_size: Vec<usize>,
     pub stride: Vec<usize>,
     pub padding: Vec<usize>,
+    pub pool_type: PoolType,
+}
+
+pub struct AdaptivePool2dConf {
+    pub output_size: Vec<usize>,
     pub pool_type: PoolType,
 }
 
@@ -47,8 +52,8 @@ pub enum PoolType {
 pub struct LinearConf {
     pub in_features: usize,
     pub out_features: usize,
-    pub weights: ArrayD<f32>,
-    pub bias: ArrayD<f32>,
+    pub weights: TensorValue,
+    pub bias: TensorValue,
 }
 
 pub struct ViewConf {
@@ -61,20 +66,11 @@ pub struct ExprConf {
     pub expr: String,
 }
 
-pub enum ZOpConf {
-    Unkown,
-    ReLU(ReLUConf),
-    Sigmoid(SigmoidConf),
-    Tanh(TanhConf),
-    Softmax(SoftmaxConf),
-    BatchNorm(BatchNormConf),
-    Conv2d(Conv2dConf),
-    Pool(PoolConf),
-    Linear(LinearConf),
-    View(ViewConf),
-    Expression(ExprConf),
+pub struct FlattenConf {
+    pub start_dim: isize,
+    pub end_dim: isize,
 }
 
-pub trait FromZOpConf {
-    fn from_zopconf(zopconf: ZOpConf) -> Result<Box<dyn Forward>>;
+pub trait ToLayer {
+    fn to_layer(self: Self) -> Result<Box<dyn Forward>>;
 }

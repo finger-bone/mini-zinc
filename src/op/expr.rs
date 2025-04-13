@@ -3,8 +3,8 @@ use ndarray::ArrayD;
 use std::str::FromStr;
 
 use super::{
-    conf::{FromZOpConf, ZOpConf},
-    layer::Forward,
+    conf::{ExprConf, ToLayer},
+    layer::{Forward, TensorValue},
 };
 
 use nom::{
@@ -99,7 +99,14 @@ pub struct ExprLayer {
 }
 
 impl Forward for ExprLayer {
-    fn forward(&self, inputs: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
+    fn forward(&self, inputs: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+        let inputs = inputs
+            .iter()
+            .map(|v| match v {
+                TensorValue::Float32(arr) => arr.clone(),
+                _ => panic!("Unsupported input type for Expr"),
+            })
+            .collect::<Vec<_>>();
         fn eval_expr(expr: &Expr, inputs: &Vec<ArrayD<f32>>) -> ArrayD<f32> {
             match &expr.op {
                 ExprOp::Input(idx) => inputs[*idx].clone(),
@@ -120,18 +127,13 @@ impl Forward for ExprLayer {
             }
         }
 
-        vec![eval_expr(&self.ast, inputs)]
+        Ok(vec![TensorValue::Float32(eval_expr(&self.ast, &inputs))])
     }
 }
 
-impl FromZOpConf for ExprLayer {
-    fn from_zopconf(zopconf: ZOpConf) -> Result<Box<dyn Forward>> {
-        let lconf = match zopconf {
-            ZOpConf::Expression(conf) => conf,
-            _ => return Err(anyhow::anyhow!("Expected Expression variant")),
-        };
-
-        let ast = Expr::parse(&lconf.expr)?;
+impl ToLayer for ExprConf {
+    fn to_layer(self: Self) -> Result<Box<dyn Forward>> {
+        let ast = Expr::parse(&self.expr)?;
         Ok(Box::new(ExprLayer { ast }))
     }
 }

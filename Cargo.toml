@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = "1.0.97"
 bytemuck = "1.22.0"
 byteorder = "1.5.0"
+half = "2.6.0"
 ndarray = { version = "0.16.1", features = ["rayon"]}
 nom = "8.0.0"
 ocl = "0.19.7"

@@ -1,6 +1,6 @@
 use super::{
-    conf::{self, FromZOpConf},
-    layer::Forward,
+    conf::{self, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ocl::ProQue;
@@ -10,9 +10,11 @@ pub struct TanhLayer {
 }
 
 impl Forward for TanhLayer {
-    fn forward(&self, input: &Vec<ndarray::ArrayD<f32>>) -> Vec<ndarray::ArrayD<f32>> {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for Tanh"));
+        };
         let output_buffer = self
             .pro_que
             .buffer_builder::<f32>()
@@ -42,15 +44,13 @@ impl Forward for TanhLayer {
             .read(output.as_slice_mut().unwrap())
             .enq()
             .unwrap();
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::TanhConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::Tanh(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not Tanh"));
-        };
+impl ToLayer for conf::TanhConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let _ = self;
         Ok(Box::new(TanhLayer {
             pro_que: ProQue::builder()
                 .src(include_str!("./tanh.cl"))

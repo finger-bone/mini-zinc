@@ -20,6 +20,9 @@ use anyhow::{Result, anyhow};
 use nom::character::complete::space1;
 use nom::character::complete::usize;
 
+use super::pnnx_value_parser::parse_shape_and_dtype;
+use super::pnnx_weight_reader::PNNXBinDataType;
+
 pub struct PNNXReaderResult {
     pub num_layers: usize,
     pub num_blobs: usize,
@@ -35,7 +38,22 @@ pub struct PNNXLine {
     pub kvs: Vec<PNNXKV>,
 }
 
-#[derive(Clone)]
+impl PNNXLine {
+    pub fn get(&self, key: &str, expect_type: PNNXKVType) -> Option<&PNNXKV> {
+        for kv in &self.kvs {
+            if kv.kv_type == expect_type && kv.key == key {
+                return Some(&kv);
+            }
+        }
+        panic!("key not found")
+    }
+
+    pub fn get_weight_key(&self, key: &str) -> String {
+        format!("{}.{}", self.op_name, key)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PNNXKVType {
     Attr,
     Input,
@@ -43,6 +61,7 @@ pub enum PNNXKVType {
     Tensor,
 }
 
+#[derive(Clone, Debug)]
 pub struct PNNXKV {
     pub kv_type: PNNXKVType,
     pub key: String,
@@ -165,5 +184,32 @@ impl PNNXReaderResult {
         let mut src = String::new();
         reader.read_to_string(&mut src)?;
         Self::from_text(&src)
+    }
+}
+
+impl PNNXReaderResult {
+    pub fn get_shape_and_dtype_map(
+        &self,
+    ) -> (
+        HashMap<String, Vec<usize>>,
+        HashMap<String, PNNXBinDataType>,
+    ) {
+        let mut shape_map = HashMap::<String, Vec<usize>>::new();
+        let mut dtype_map = HashMap::<String, PNNXBinDataType>::new();
+        for line in &self.lines {
+            for kv in &line.kvs {
+                match kv.kv_type {
+                    PNNXKVType::Tensor => {
+                        let (_, (shape, dtype)) = parse_shape_and_dtype(&kv.value).unwrap();
+                        shape_map.insert(line.get_weight_key(&kv.key), shape);
+                        dtype_map.insert(line.get_weight_key(&kv.key), dtype);
+                    }
+                    _ => {
+                        continue;
+                    }
+                }
+            }
+        }
+        (shape_map, dtype_map)
     }
 }

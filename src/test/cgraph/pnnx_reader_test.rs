@@ -1,5 +1,9 @@
-use crate::cgraph::pnnx_reader::{PNNXKVType, PNNXReaderResult};
+use crate::cgraph::{
+    pnnx_reader::{PNNXKVType, PNNXReaderResult},
+    pnnx_weight_reader::PNNXBinDataType,
+};
 use anyhow::Result;
+use std::collections::HashMap;
 
 #[test]
 fn test_parse_maxpool2d() -> Result<()> {
@@ -61,6 +65,37 @@ fn test_parse_expression() -> Result<()> {
     assert_eq!(pnnx_line.op_name, "Expression_0");
     assert_eq!(pnnx_line.input_idx_list, vec![1, 2]);
     assert_eq!(pnnx_line.output_idx_list, vec![1]);
+    Ok(())
+}
+
+#[test]
+fn test_get_shape_and_dtype_map() -> Result<()> {
+    let text = r#"7767517
+2 1
+Conv2d Conv2d_0 1 1 1 1 @weight=(64,3,3,3)f32
+ReLU ReLU_0 1 1 1 1 @output=(1,64,224,224)f32"#;
+    let reader = PNNXReaderResult::from_text(text)?;
+
+    let (shape_map, dtype_map) = reader.get_shape_and_dtype_map();
+    assert_eq!(shape_map.len(), 2);
+
+    let expected_shape_map: HashMap<String, Vec<usize>> = [
+        ("Conv2d_0.weight".to_string(), vec![64, 3, 3, 3]),
+        ("ReLU_0.output".to_string(), vec![1, 64, 224, 224]),
+    ]
+    .into_iter()
+    .collect();
+
+    assert_eq!(shape_map, expected_shape_map);
+
+    let expected_dtype_map: HashMap<String, PNNXBinDataType> = [
+        ("Conv2d_0.weight".to_string(), PNNXBinDataType::Float32),
+        ("ReLU_0.output".to_string(), PNNXBinDataType::Float32),
+    ]
+    .into_iter()
+    .collect();
+
+    assert_eq!(dtype_map, expected_dtype_map);
     Ok(())
 }
 

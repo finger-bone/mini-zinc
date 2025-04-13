@@ -1,20 +1,22 @@
 use super::{
-    conf::{self, FromZOpConf, PoolType},
-    layer::Forward,
+    conf::{self, PoolType, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
 use ocl::ProQue;
 
-pub struct PoolLayer {
-    pub lconf: conf::PoolConf,
+pub struct AdaptivePool2dLayer {
+    pub lconf: conf::AdaptivePool2dConf,
     pub pro_que: ProQue,
 }
 
-impl Forward for PoolLayer {
-    fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
+impl Forward for AdaptivePool2dLayer {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for AdaptivePool"));
+        };
         let input_shape = input.shape();
         let batch_size = input_shape[0];
         let channels = input_shape[1];
@@ -25,13 +27,8 @@ impl Forward for PoolLayer {
             1
         };
 
-        // Calculate output dimensions
-        let output_height = (input_height + 2 * self.lconf.padding[0] - self.lconf.kernel_size[0])
-            / self.lconf.stride[0]
-            + 1;
-        let output_width = (input_width + 2 * self.lconf.padding[1] - self.lconf.kernel_size[1])
-            / self.lconf.stride[1]
-            + 1;
+        let output_height = self.lconf.output_size[0];
+        let output_width = self.lconf.output_size[1];
 
         // Create output buffer
         let output_buffer = self
@@ -50,31 +47,22 @@ impl Forward for PoolLayer {
             .build()
             .unwrap();
 
-        // Determine pool type
-        let pool_type = match self.lconf.pool_type {
-            PoolType::Max => 0,
-            PoolType::Avg => 1,
-        };
-
         // Build and execute kernel
         let kernel = self
             .pro_que
-            .kernel_builder("pool")
+            .kernel_builder("adaptive_pool")
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(batch_size as i32)
             .arg(channels as i32)
             .arg(input_height as i32)
             .arg(input_width as i32)
-            .arg(self.lconf.kernel_size[0] as i32)
-            .arg(self.lconf.kernel_size[1] as i32)
-            .arg(self.lconf.stride[0] as i32)
-            .arg(self.lconf.stride[1] as i32)
-            .arg(self.lconf.padding[0] as i32)
-            .arg(self.lconf.padding[1] as i32)
             .arg(output_height as i32)
             .arg(output_width as i32)
-            .arg(pool_type)
+            .arg(match self.lconf.pool_type {
+                PoolType::Max => 0,
+                PoolType::Avg => 1,
+            } as i32) // Pool type
             .build()
             .unwrap();
 
@@ -93,20 +81,18 @@ impl Forward for PoolLayer {
             .read(output.as_slice_mut().unwrap())
             .enq()
             .unwrap();
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::PoolConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::Pool(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not Pool"));
-        };
+impl ToLayer for conf::AdaptivePool2dConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let lconf = self;
 
-        Ok(Box::new(PoolLayer {
+        Ok(Box::new(AdaptivePool2dLayer {
             lconf,
             pro_que: ProQue::builder()
-                .src(include_str!("./pool.cl"))
+                .src(include_str!("./adaptive_pool2d.cl"))
                 .dims(256)
                 .build()
                 .unwrap(),

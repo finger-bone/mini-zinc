@@ -1,6 +1,6 @@
 use super::{
-    conf::{self, FromZOpConf},
-    layer::Forward,
+    conf::{self, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
@@ -10,9 +10,11 @@ pub struct ViewLayer {
 }
 
 impl Forward for ViewLayer {
-    fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for View"));
+        };
 
         // Check if the total number of elements matches
         let input_size: usize = self.lconf.input_shape.iter().product();
@@ -27,15 +29,13 @@ impl Forward for ViewLayer {
             .clone()
             .into_shape_with_order(ndarray::IxDyn(&self.lconf.output_shape))
             .unwrap();
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::ViewConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::View(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not View"));
-        };
+impl ToLayer for conf::ViewConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let lconf = self;
         Ok(Box::new(ViewLayer { lconf }))
     }
 }

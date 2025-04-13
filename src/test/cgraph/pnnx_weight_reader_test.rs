@@ -1,5 +1,7 @@
-use crate::cgraph::pnnx_weight_reader::load_pnnx_zip_bin;
+use crate::cgraph::pnnx_weight_reader::{PNNXBinDataType, load_pnnx_zip_bin};
+use crate::op::layer::TensorValue;
 use byteorder::{LittleEndian, WriteBytesExt};
+use half::{bf16, f16};
 use ndarray::ArrayD;
 use std::collections::HashMap;
 use std::fs::File;
@@ -45,21 +47,32 @@ fn test_load_pnnx_zip_bin_multiple_weights() {
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![2, 2]);
     shape_map.insert("weight2".to_string(), vec![2, 3]);
+    let mut data_type_map = HashMap::new();
+    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
+    data_type_map.insert("weight2".to_string(), PNNXBinDataType::Float32);
 
     // 加载并验证结果
-    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map).unwrap();
+    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map).unwrap();
 
     // 验证第一个权重
     assert!(result.contains_key("weight1"));
     let array1 = &result["weight1"];
-    assert_eq!(array1.shape(), &[2, 2]);
-    assert_eq!(array1.as_slice().unwrap(), &[1.0, 2.0, 3.0, 4.0]);
+    if let TensorValue::Float32(array1) = array1 {
+        assert_eq!(array1.shape(), &[2, 2]);
+        assert_eq!(array1.as_slice().unwrap(), &[1.0, 2.0, 3.0, 4.0]);
+    } else {
+        panic!("Unexpected type for weight1");
+    }
 
     // 验证第二个权重
     assert!(result.contains_key("weight2"));
     let array2 = &result["weight2"];
-    assert_eq!(array2.shape(), &[2, 3]);
-    assert_eq!(array2.as_slice().unwrap(), &[5.0, 6.0, 7.0, 8.0, 9.0, 10.0]);
+    if let TensorValue::Float32(array2) = array2 {
+        assert_eq!(array2.shape(), &[2, 3]);
+        assert_eq!(array2.as_slice().unwrap(), &[5.0, 6.0, 7.0, 8.0, 9.0, 10.0]);
+    } else {
+        panic!("Unexpected type for weight2");
+    }
 }
 
 #[test]
@@ -88,14 +101,20 @@ fn test_load_pnnx_zip_bin_compressed() {
     // 构造shape_map
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![2, 2]);
+    let mut data_type_map = HashMap::new();
+    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
 
     // 加载并验证结果
-    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map).unwrap();
+    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map).unwrap();
 
     assert!(result.contains_key("weight1"));
     let array = &result["weight1"];
-    assert_eq!(array.shape(), &[2, 2]);
-    assert_eq!(array.as_slice().unwrap(), &[1.0, 2.0, 3.0, 4.0]);
+    if let TensorValue::Float32(array) = array {
+        assert_eq!(array.shape(), &[2, 2]);
+        assert_eq!(array.as_slice().unwrap(), &[1.0, 2.0, 3.0, 4.0]);
+    } else {
+        panic!("Unexpected type for weight1");
+    }
 }
 
 #[test]
@@ -124,9 +143,11 @@ fn test_load_pnnx_zip_bin_shape_mismatch() {
     // 构造错误的shape_map（元素数量不匹配）
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![3, 3]);
+    let mut data_type_map = HashMap::new();
+    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
 
     // 加载并验证结果应该失败
-    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map);
+    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map);
     assert!(result.is_err());
 }
 
@@ -156,12 +177,18 @@ fn test_load_pnnx_zip_bin() {
     // 构造shape_map
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![2, 2]);
+    let mut data_type_map = HashMap::new();
+    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
 
     // 加载并验证结果
-    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map).unwrap();
+    let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map).unwrap();
 
     assert!(result.contains_key("weight1"));
     let array = &result["weight1"];
-    assert_eq!(array.shape(), &[2, 2]);
-    assert_eq!(array.as_slice().unwrap(), &[1.0, 2.0, 3.0, 4.0]);
+    if let TensorValue::Float32(array) = array {
+        assert_eq!(array.shape(), &[2, 2]);
+        assert_eq!(array.as_slice().unwrap(), &[1.0, 2.0, 3.0, 4.0]);
+    } else {
+        panic!("Unexpected type for weight1");
+    }
 }

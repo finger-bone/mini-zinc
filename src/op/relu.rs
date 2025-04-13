@@ -1,6 +1,6 @@
 use super::{
-    conf::{self, FromZOpConf},
-    layer::Forward,
+    conf::{self, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
@@ -12,9 +12,11 @@ pub struct ReLULayer {
 }
 
 impl Forward for ReLULayer {
-    fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for ReLU"));
+        };
         let output_buffer = self
             .pro_que
             .buffer_builder::<f32>()
@@ -45,15 +47,13 @@ impl Forward for ReLULayer {
             .read(output.as_slice_mut().unwrap())
             .enq()
             .unwrap();
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::ReLUConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::ReLU(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not ReLU"));
-        };
+impl ToLayer for conf::ReLUConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let lconf = self;
         Ok(Box::new(ReLULayer {
             lconf,
             pro_que: ProQue::builder()

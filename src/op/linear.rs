@@ -1,6 +1,6 @@
 use super::{
-    conf::{self, FromZOpConf},
-    layer::Forward,
+    conf::{self, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
@@ -12,9 +12,11 @@ pub struct LinearLayer {
 }
 
 impl Forward for LinearLayer {
-    fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for Linear"));
+        };
         let input_shape = input.shape();
         let input_rank = input_shape.len();
 
@@ -62,21 +64,29 @@ impl Forward for LinearLayer {
             .build()
             .unwrap();
 
+        let weights = match &self.lconf.weights {
+            TensorValue::Float32(weights) => weights,
+            _ => return Err(anyhow::anyhow!("Unsupported weights type for Linear")),
+        };
         // Create weights buffer
         let weights_buffer = self
             .pro_que
             .buffer_builder::<f32>()
-            .len(self.lconf.weights.len())
-            .copy_host_slice(self.lconf.weights.as_slice().unwrap())
+            .len(weights.len())
+            .copy_host_slice(weights.as_slice().unwrap())
             .build()
             .unwrap();
 
+        let bias = match &self.lconf.bias {
+            TensorValue::Float32(bias) => bias,
+            _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
+        };
         // Create bias buffer
         let bias_buffer = self
             .pro_que
             .buffer_builder::<f32>()
-            .len(self.lconf.bias.len())
-            .copy_host_slice(self.lconf.bias.as_slice().unwrap())
+            .len(bias.len())
+            .copy_host_slice(bias.as_slice().unwrap())
             .build()
             .unwrap();
 
@@ -115,16 +125,13 @@ impl Forward for LinearLayer {
         for i in 0..output_slice.len() {
             output_slice[i] = flat_output_slice[i];
         }
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::LinearConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::Linear(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not Linear"));
-        };
-
+impl ToLayer for conf::LinearConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let lconf = self;
         Ok(Box::new(LinearLayer {
             lconf,
             pro_que: ProQue::builder()

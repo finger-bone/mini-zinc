@@ -1,45 +1,52 @@
 use ndarray::ArrayD;
 
 use crate::op::{
-    conf::{FromZOpConf, ReLUConf, ZOpConf},
-    layer::Forward,
+    conf::{ReLUConf, ToLayer},
+    layer::{Forward, TensorValue},
 };
 
 #[test]
 fn test_relu_forward() {
     let relu = ReLUConf { threshold: 0.0 };
-    let layer = ZOpConf::ReLU(relu);
-    let layer = ReLUConf::from_zopconf(layer).unwrap();
+    let layer = relu.to_layer().unwrap();
 
     // 测试正数保持不变
     let input = ArrayD::from_shape_vec(vec![2, 2], vec![1.0, 2.0, 3.0, 4.0]).unwrap();
-    let output = layer.forward(&vec![input.clone()]);
-    assert_eq!(output[0], input);
+    let output = layer
+        .forward(&vec![TensorValue::Float32(input.clone())])
+        .unwrap();
+    // assert_eq!(output[0], input);
+    if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output, input);
+    } else {
+        panic!("Expected Float32 output");
+    }
 
     // 测试负数变为0
     let input = ArrayD::from_shape_vec(vec![2, 2], vec![-1.0, -2.0, 0.0, 1.0]).unwrap();
-    let output = layer.forward(&vec![input]);
-    let expected = ArrayD::from_shape_vec(vec![2, 2], vec![0.0, 0.0, 0.0, 1.0]).unwrap();
-    assert_eq!(output[0], expected);
+    let output = layer
+        .forward(&vec![TensorValue::Float32(input.clone())])
+        .unwrap();
+    if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(
+            output,
+            ArrayD::from_shape_vec(vec![2, 2], vec![0.0, 0.0, 0.0, 1.0]).unwrap()
+        );
+    } else {
+        panic!("Expected Float32 output");
+    }
 
     // 测试自定义阈值
     let relu = ReLUConf { threshold: 2.0 };
-    let layer = ZOpConf::ReLU(relu);
-    let layer = ReLUConf::from_zopconf(layer).unwrap();
+    let layer = relu.to_layer().unwrap();
     let input = ArrayD::from_shape_vec(vec![2, 2], vec![1.0, 2.0, 3.0, 4.0]).unwrap();
-    let output = layer.forward(&vec![input]);
+    let output = layer
+        .forward(&vec![TensorValue::Float32(input.clone())])
+        .unwrap();
     let expected = ArrayD::from_shape_vec(vec![2, 2], vec![0.0, 0.0, 3.0, 4.0]).unwrap();
-    assert_eq!(output[0], expected);
-}
-
-#[test]
-fn test_relu_config() {
-    // 测试正确的配置
-    let relu = ReLUConf { threshold: 0.0 };
-    let layer = ZOpConf::ReLU(relu);
-    assert!(ReLUConf::from_zopconf(layer).is_ok());
-
-    // 测试错误的配置类型
-    let layer = ZOpConf::ReLU(ReLUConf { threshold: 0.0 });
-    assert!(ReLUConf::from_zopconf(layer).is_ok());
+    if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output, expected);
+    } else {
+        panic!("Expected Float32 output");
+    }
 }

@@ -1,8 +1,8 @@
 use ndarray::ArrayD;
 
 use crate::op::{
-    conf::{FromZOpConf, LinearConf, ZOpConf},
-    layer::Forward,
+    conf::{LinearConf, ToLayer},
+    layer::{Forward, TensorValue},
 };
 
 #[test]
@@ -14,18 +14,22 @@ fn test_linear_forward() {
     let linear = LinearConf {
         in_features: 3,
         out_features: 2,
-        weights: ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
-        bias: ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        weights: TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
+        ),
+        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = ZOpConf::Linear(linear);
-    let layer = LinearConf::from_zopconf(layer).unwrap();
+    let layer = linear.to_layer().unwrap();
 
     // Forward pass
-    let output = layer.forward(&vec![input]);
+    let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
-    // Check output shape (should be 2x2)
-    assert_eq!(output[0].shape(), &[2, 2]);
+    if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 2]);
+    } else {
+        panic!("Expected Float32 output");
+    }
 }
 
 #[test]
@@ -43,18 +47,22 @@ fn test_linear_3d_input() {
     let linear = LinearConf {
         in_features: 4,
         out_features: 2,
-        weights: ArrayD::from_shape_vec(vec![2, 4], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
-            .unwrap(),
-        bias: ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        weights: TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2, 4], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
+                .unwrap(),
+        ),
+        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = ZOpConf::Linear(linear);
-    let layer = LinearConf::from_zopconf(layer).unwrap();
+    let layer = linear.to_layer().unwrap();
 
-    let output = layer.forward(&vec![input]);
+    let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
-    // Check output shape (should preserve batch and seq_len dimensions)
-    assert_eq!(output[0].shape(), &[2, 3, 2]);
+    if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 3, 2]);
+    } else {
+        panic!("Expected Float32 output");
+    }
 }
 
 #[test]
@@ -72,17 +80,20 @@ fn test_linear_4d_input() {
     let linear = LinearConf {
         in_features: 3,
         out_features: 2,
-        weights: ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
-        bias: ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        weights: TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
+        ),
+        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = ZOpConf::Linear(linear);
-    let layer = LinearConf::from_zopconf(layer).unwrap();
+    let layer = linear.to_layer().unwrap();
 
-    let output = layer.forward(&vec![input]);
-
-    // Check output shape (should preserve all dimensions except the last one)
-    assert_eq!(output[0].shape(), &[2, 2, 2, 2]);
+    let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
+    if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 2, 2, 2]);
+    } else {
+        panic!("Expected Float32 output");
+    }
 }
 
 #[test]
@@ -93,12 +104,13 @@ fn test_linear_invalid_features() {
     let linear = LinearConf {
         in_features: 3, // Mismatched with input's last dimension (4)
         out_features: 2,
-        weights: ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
-        bias: ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        weights: TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
+        ),
+        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = ZOpConf::Linear(linear);
-    let layer = LinearConf::from_zopconf(layer).unwrap();
+    let layer = linear.to_layer().unwrap();
 
-    layer.forward(&vec![input]); // Should panic
+    layer.forward(&vec![TensorValue::Float32(input)]).unwrap(); // Should panic
 }

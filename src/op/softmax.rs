@@ -1,6 +1,6 @@
 use super::{
-    conf::{self, FromZOpConf},
-    layer::Forward,
+    conf::{self, ToLayer},
+    layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
 use ocl::ProQue;
@@ -11,9 +11,11 @@ pub struct SoftmaxLayer {
 }
 
 impl Forward for SoftmaxLayer {
-    fn forward(&self, input: &Vec<ndarray::ArrayD<f32>>) -> Vec<ndarray::ArrayD<f32>> {
+    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input = &input[0];
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow::anyhow!("Unsupported input type for Softmax"));
+        };
         let shape = input.shape();
         let size = input.len();
 
@@ -58,15 +60,13 @@ impl Forward for SoftmaxLayer {
             .read(output.as_slice_mut().unwrap())
             .enq()
             .unwrap();
-        vec![output]
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
-impl FromZOpConf for conf::SoftmaxConf {
-    fn from_zopconf(zopconf: conf::ZOpConf) -> Result<Box<dyn Forward>> {
-        let conf::ZOpConf::Softmax(lconf) = zopconf else {
-            return Err(anyhow::anyhow!("not Softmax"));
-        };
+impl ToLayer for conf::SoftmaxConf {
+    fn to_layer(self) -> Result<Box<dyn Forward>> {
+        let lconf = self;
         Ok(Box::new(SoftmaxLayer {
             lconf,
             pro_que: ProQue::builder()
