@@ -3,7 +3,6 @@ use super::{
     layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
-use ndarray::ArrayD;
 use ocl::ProQue;
 
 pub struct ReLULayer {

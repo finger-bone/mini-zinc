@@ -3,7 +3,7 @@ pub mod conv2d_test;
 pub mod expr_test;
 pub mod flatten_test;
 pub mod linear_test;
+pub mod node_test;
 pub mod pool2d_test;
 pub mod relu_test;
 pub mod view_test;
-pub mod node_test;

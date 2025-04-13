@@ -1,5 +1,4 @@
 use anyhow::Result;
-use ndarray::ArrayD;
 
 use super::layer::{Forward, TensorValue};
 

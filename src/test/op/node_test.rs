@@ -40,7 +40,9 @@ fn test_cgnode_from_flatten_line() {
     match &node.op {
         CGNodeOp::Op(layer) => {
             let input_tensor = TensorValue::Float32(ndarray::ArrayD::zeros(vec![2, 3, 4])); // 3-dimensional tensor
-            if let TensorValue::Float32(output_tensor) = &layer.forward(&vec![input_tensor]).unwrap()[0] {
+            if let TensorValue::Float32(output_tensor) =
+                &layer.forward(&vec![input_tensor]).unwrap()[0]
+            {
                 // Ensure forward pass works (basic validation)
                 assert_eq!(output_tensor.shape(), &[2, 12]); // Flattened shape should be [2, 12]
             } else {

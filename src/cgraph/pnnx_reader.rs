@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufReader, Read};
 use std::path::Path;
 
 use nom::AsChar;
@@ -10,10 +10,7 @@ use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::{tag, take_while1},
-    character::complete::{char, space0},
-    combinator::{map, success},
     multi::separated_list0,
-    sequence::{delimited, preceded},
 };
 
 use anyhow::{Result, anyhow};

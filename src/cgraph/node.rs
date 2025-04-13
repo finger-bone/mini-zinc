@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Debug, path::Path};
+use std::{collections::HashMap, fmt::Debug};
 
 use anyhow::{Ok, Result, anyhow};
 use nom::Parser;
@@ -7,7 +7,6 @@ use crate::{
     cgraph::{
         pnnx_reader::{self, PNNXKVType},
         pnnx_value_parser::parse_usize,
-        pnnx_weight_reader::load_pnnx_zip_bin,
     },
     op::{
         conf::{
@@ -17,15 +16,10 @@ use crate::{
         layer::{Forward, TensorValue},
     },
 };
-use nom::character::complete::usize;
 
 use crate::op::conf::ToLayer;
 
-use super::{
-    pnnx_reader::PNNXReaderResult,
-    pnnx_value_parser::{parse_isize, parse_shape_and_dtype, parse_usize_tuple},
-    pnnx_weight_reader,
-};
+use super::pnnx_value_parser::{parse_isize, parse_usize_tuple};
 
 pub enum CGNodeOp {
     Input,
@@ -70,7 +64,7 @@ impl CGNode {
                 let (_, groups) = parse_usize
                     .parse(line.get("groups", PNNXKVType::Attr).unwrap().value.as_str())
                     .unwrap();
-                let (_, in_channels) = parse_usize
+                let (_, _in_channels) = parse_usize
                     .parse(
                         line.get("in_channels", PNNXKVType::Attr)
                             .unwrap()
@@ -123,7 +117,7 @@ impl CGNode {
             }
             "nn.MaxPool2d" => {
                 // ceil_mode=False dilation=(1,1) kernel_size=(3,3) padding=(1,1) return_indices=False stride=(2,2)
-                let (_, dilation) = parse_usize_tuple
+                let (_, _dilation) = parse_usize_tuple
                     .parse(&line.get("dilation", PNNXKVType::Attr).unwrap().value)
                     .unwrap();
                 let (_, kernel_size) = parse_usize_tuple

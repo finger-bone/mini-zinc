@@ -1,5 +1,4 @@
 use byteorder::{LittleEndian, ReadBytesExt};
-use half::{bf16, f16};
 use ndarray::{ArrayD, IxDyn};
 use std::collections::HashMap;
 use std::fs::File;

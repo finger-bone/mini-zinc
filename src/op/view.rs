@@ -3,7 +3,6 @@ use super::{
     layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
-use ndarray::ArrayD;
 
 pub struct ViewLayer {
     pub lconf: conf::ViewConf,

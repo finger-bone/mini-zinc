@@ -2,7 +2,7 @@ use nom::character::complete::{isize, usize};
 use nom::{
     IResult, Parser,
     bytes::complete::tag,
-    character::complete::{alphanumeric1, digit1},
+    character::complete::alphanumeric1,
     combinator::map_res,
     multi::separated_list0,
     sequence::{delimited, pair},

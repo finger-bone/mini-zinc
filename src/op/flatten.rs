@@ -3,7 +3,7 @@ use super::{
     layer::{Forward, TensorValue},
 };
 use anyhow::{Ok, Result};
-use ndarray::{ArrayD, IxDyn};
+use ndarray::IxDyn;
 
 pub struct FlattenLayer {
     pub fconf: conf::FlattenConf,
@@ -46,7 +46,10 @@ impl Forward for FlattenLayer {
         output_shape.extend_from_slice(&input_shape[end_dim + 1..]);
 
         // Reshape the input tensor
-        let output = input.clone().into_shape(IxDyn(&output_shape)).unwrap();
+        let output = input
+            .clone()
+            .into_shape_with_order(IxDyn(&output_shape))
+            .unwrap();
         Ok(vec![TensorValue::Float32(output)])
     }
 }
