@@ -8,13 +8,13 @@ use super::{
 };
 
 use nom::{
+    IResult, Parser,
     branch::alt,
     bytes::complete::tag,
     character::complete::{char, digit1},
     combinator::map_res,
     multi::separated_list0,
     sequence::delimited,
-    IResult, Parser,
 };
 
 #[derive(Debug, Clone)]
@@ -44,7 +44,13 @@ impl Expr {
 fn input_parser(input: &str) -> IResult<&str, Expr> {
     let (input, _) = char('@').parse(input)?;
     let (input, idx) = map_res(digit1, FromStr::from_str).parse(input)?;
-    Ok((input, Expr { op: ExprOp::Input(idx), children: vec![] }))
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Input(idx),
+            children: vec![],
+        },
+    ))
 }
 
 fn add_parser(input: &str) -> IResult<&str, Expr> {
@@ -53,8 +59,15 @@ fn add_parser(input: &str) -> IResult<&str, Expr> {
         char('('),
         separated_list0(char(','), expr_parser),
         char(')'),
-    ).parse(input)?;
-    Ok((input, Expr { op: ExprOp::Add, children }))
+    )
+    .parse(input)?;
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Add,
+            children,
+        },
+    ))
 }
 
 fn mul_parser(input: &str) -> IResult<&str, Expr> {
@@ -63,17 +76,20 @@ fn mul_parser(input: &str) -> IResult<&str, Expr> {
         char('('),
         separated_list0(char(','), expr_parser),
         char(')'),
-    ).parse(input)?;
-    Ok((input, Expr { op: ExprOp::Mul, children }))
+    )
+    .parse(input)?;
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Mul,
+            children,
+        },
+    ))
 }
 
 // 重点：nom 8 写法，使用 `.parse(input)`
 fn expr_parser(input: &str) -> IResult<&str, Expr> {
-    alt((
-        input_parser,
-        add_parser,
-        mul_parser,
-    )).parse(input)
+    alt((input_parser, add_parser, mul_parser)).parse(input)
 }
 
 // --- Layer implementation ---

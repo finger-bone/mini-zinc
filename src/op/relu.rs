@@ -1,4 +1,7 @@
-use super::{conf::{self, FromZOpConf}, layer::Forward};
+use super::{
+    conf::{self, FromZOpConf},
+    layer::Forward,
+};
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
 use ocl::ProQue;
@@ -12,16 +15,22 @@ impl Forward for ReLULayer {
     fn forward(&self, input: &Vec<ArrayD<f32>>) -> Vec<ArrayD<f32>> {
         // Only process the first element
         let input = &input[0];
-        let output_buffer = self.pro_que.buffer_builder::<f32>()
+        let output_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(input.len())
             .build()
             .unwrap();
-        let input_buffer = self.pro_que.buffer_builder::<f32>()
+        let input_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(input.len())
             .copy_host_slice(input.as_slice().unwrap())
             .build()
             .unwrap();
-        let kernel = self.pro_que.kernel_builder("relu")
+        let kernel = self
+            .pro_que
+            .kernel_builder("relu")
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(self.lconf.threshold)
@@ -32,7 +41,10 @@ impl Forward for ReLULayer {
         }
 
         let mut output = ndarray::ArrayD::zeros(input.raw_dim());
-        output_buffer.read(output.as_slice_mut().unwrap()).enq().unwrap();
+        output_buffer
+            .read(output.as_slice_mut().unwrap())
+            .enq()
+            .unwrap();
         vec![output]
     }
 }
@@ -42,6 +54,13 @@ impl FromZOpConf for conf::ReLUConf {
         let conf::ZOpConf::ReLU(lconf) = zopconf else {
             return Err(anyhow::anyhow!("not ReLU"));
         };
-        Ok(Box::new(ReLULayer { lconf,  pro_que: ProQue::builder().src(include_str!("./relu.cl")).dims(256).build().unwrap() }))
+        Ok(Box::new(ReLULayer {
+            lconf,
+            pro_que: ProQue::builder()
+                .src(include_str!("./relu.cl"))
+                .dims(256)
+                .build()
+                .unwrap(),
+        }))
     }
 }

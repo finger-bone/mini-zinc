@@ -1,8 +1,11 @@
 use std::{collections::HashMap, path::Path};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
-use crate::{cgraph::{pnnx_reader, pnnx_weight_reader::load_pnnx_zip_bin}, op::layer::Forward};
+use crate::{
+    cgraph::{pnnx_reader, pnnx_weight_reader::load_pnnx_zip_bin},
+    op::layer::Forward,
+};
 
 use super::pnnx_reader::PNNXReaderResult;
 
@@ -27,16 +30,10 @@ pub struct ComputationGraph {
 }
 
 impl ComputationGraph {
-
-    pub fn from_pnnx<P: AsRef<Path>>(
-        param_path: P, weight_path: P
-    ) -> Result<Self> {
+    pub fn from_pnnx<P: AsRef<Path>>(param_path: P, weight_path: P) -> Result<Self> {
         let param_result = PNNXReaderResult::from_file(param_path)?;
 
-        
-
         // let weight_result = load_pnnx_zip_bin(weight_path);
-
 
         todo!()
     }

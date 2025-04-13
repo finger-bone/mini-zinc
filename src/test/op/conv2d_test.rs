@@ -1,18 +1,21 @@
 use ndarray::ArrayD;
 
-use crate::op::{conf::{Conv2dConf, FromZOpConf, ZOpConf}, layer::Forward};
+use crate::op::{
+    conf::{Conv2dConf, FromZOpConf, ZOpConf},
+    layer::Forward,
+};
 
 #[test]
 fn test_conv_forward() {
     // Create a simple 1x1x4x4 input (batch_size=1, channels=1, height=4, width=4)
     let input = ArrayD::from_shape_vec(
-        vec![1, 1, 4, 4], 
-        vec![1.0, 2.0, 3.0, 4.0, 
-                5.0, 6.0, 7.0, 8.0, 
-                9.0, 10.0, 11.0, 12.0, 
-                13.0, 14.0, 15.0, 16.0]
-    ).unwrap();
-    
+        vec![1, 1, 4, 4],
+        vec![
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+        ],
+    )
+    .unwrap();
+
     // Create a basic 3x3 convolution with 2 output channels
     let conv = Conv2dConf {
         kernel_size: vec![3, 3],
@@ -24,13 +27,13 @@ fn test_conv_forward() {
         weights: ArrayD::from_shape_vec(vec![2, 1, 3, 3], vec![0.1; 18]).unwrap(),
         bias: ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap(),
     };
-    
+
     let layer = ZOpConf::Conv2d(conv);
     let layer = Conv2dConf::from_zopconf(layer).unwrap();
-    
+
     // Forward pass
     let output = layer.forward(&vec![input]);
-    
+
     // Check output shape (should be 1x2x4x4 with padding)
     assert_eq!(output[0].shape(), &[1, 2, 4, 4]);
 }
@@ -39,13 +42,13 @@ fn test_conv_forward() {
 fn test_conv_stride() {
     // Create a simple 1x1x4x4 input (batch_size=1, channels=1, height=4, width=4)
     let input = ArrayD::from_shape_vec(
-        vec![1, 1, 4, 4], 
-        vec![1.0, 2.0, 3.0, 4.0, 
-                5.0, 6.0, 7.0, 8.0, 
-                9.0, 10.0, 11.0, 12.0, 
-                13.0, 14.0, 15.0, 16.0]
-    ).unwrap();
-    
+        vec![1, 1, 4, 4],
+        vec![
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+        ],
+    )
+    .unwrap();
+
     // Create a strided convolution
     let conv = Conv2dConf {
         kernel_size: vec![3, 3],
@@ -57,13 +60,13 @@ fn test_conv_stride() {
         weights: ArrayD::from_shape_vec(vec![2, 1, 3, 3], vec![0.1; 18]).unwrap(),
         bias: ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap(),
     };
-    
+
     let layer = ZOpConf::Conv2d(conv);
     let layer = Conv2dConf::from_zopconf(layer).unwrap();
-    
+
     // Forward pass
     let output = layer.forward(&vec![input]);
-    
+
     // Check output shape (should be 1x2x2x2 with stride=2)
     assert_eq!(output[0].shape(), &[1, 2, 2, 2]);
 }
@@ -73,8 +76,9 @@ fn test_conv_dilation() {
     // Create a simple 1x1x6x6 input
     let input = ArrayD::from_shape_vec(
         vec![1, 1, 6, 6],
-        (1..37).map(|x| x as f32).collect::<Vec<f32>>()
-    ).unwrap();
+        (1..37).map(|x| x as f32).collect::<Vec<f32>>(),
+    )
+    .unwrap();
 
     // Create a dilated convolution
     let conv = Conv2dConf {
@@ -103,8 +107,9 @@ fn test_conv_groups() {
     // Create input with 4 input channels
     let input = ArrayD::from_shape_vec(
         vec![1, 4, 4, 4],
-        (1..65).map(|x| x as f32).collect::<Vec<f32>>()
-    ).unwrap();
+        (1..65).map(|x| x as f32).collect::<Vec<f32>>(),
+    )
+    .unwrap();
 
     // Create grouped convolution (2 groups)
     let conv = Conv2dConf {
@@ -133,8 +138,9 @@ fn test_conv_no_padding() {
     // Create a simple 1x1x5x5 input
     let input = ArrayD::from_shape_vec(
         vec![1, 1, 5, 5],
-        (1..26).map(|x| x as f32).collect::<Vec<f32>>()
-    ).unwrap();
+        (1..26).map(|x| x as f32).collect::<Vec<f32>>(),
+    )
+    .unwrap();
 
     // Create convolution without padding
     let conv = Conv2dConf {

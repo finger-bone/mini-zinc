@@ -1,3 +1,3 @@
-pub mod op;
 pub mod cgraph;
+pub mod op;
 mod test;

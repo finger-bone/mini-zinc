@@ -1,12 +1,12 @@
+use crate::cgraph::pnnx_weight_reader::load_pnnx_zip_bin;
+use byteorder::{LittleEndian, WriteBytesExt};
+use ndarray::ArrayD;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Write, Cursor};
+use std::io::{Cursor, Write};
 use tempfile::tempdir;
-use zip::{CompressionMethod, ZipWriter};
-use ndarray::ArrayD;
-use byteorder::{LittleEndian, WriteBytesExt};
-use crate::cgraph::pnnx_weight_reader::load_pnnx_zip_bin;
 use zip::write::FileOptions;
+use zip::{CompressionMethod, ZipWriter};
 
 #[test]
 fn test_load_pnnx_zip_bin_multiple_weights() {
@@ -32,8 +32,8 @@ fn test_load_pnnx_zip_bin_multiple_weights() {
     }
 
     // 写入测试数据到zip文件
-    let options: FileOptions<()> = FileOptions::default()
-        .compression_method(CompressionMethod::Stored);
+    let options: FileOptions<()> =
+        FileOptions::default().compression_method(CompressionMethod::Stored);
 
     zip.start_file("weight1", options).unwrap();
     zip.write_all(&buf1).unwrap();
@@ -48,7 +48,7 @@ fn test_load_pnnx_zip_bin_multiple_weights() {
 
     // 加载并验证结果
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map).unwrap();
-    
+
     // 验证第一个权重
     assert!(result.contains_key("weight1"));
     let array1 = &result["weight1"];
@@ -78,8 +78,8 @@ fn test_load_pnnx_zip_bin_compressed() {
     }
 
     // 使用压缩方式写入测试数据到zip文件
-    let options: FileOptions<()> = FileOptions::default()
-        .compression_method(CompressionMethod::Deflated);
+    let options: FileOptions<()> =
+        FileOptions::default().compression_method(CompressionMethod::Deflated);
 
     zip.start_file("weight1", options).unwrap();
     zip.write_all(&buf).unwrap();
@@ -91,7 +91,7 @@ fn test_load_pnnx_zip_bin_compressed() {
 
     // 加载并验证结果
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map).unwrap();
-    
+
     assert!(result.contains_key("weight1"));
     let array = &result["weight1"];
     assert_eq!(array.shape(), &[2, 2]);
@@ -114,8 +114,8 @@ fn test_load_pnnx_zip_bin_shape_mismatch() {
     }
 
     // 写入测试数据到zip文件
-    let options: FileOptions<()> = FileOptions::default()
-        .compression_method(CompressionMethod::Stored);
+    let options: FileOptions<()> =
+        FileOptions::default().compression_method(CompressionMethod::Stored);
 
     zip.start_file("weight1", options).unwrap();
     zip.write_all(&buf).unwrap();
@@ -146,8 +146,8 @@ fn test_load_pnnx_zip_bin() {
     }
 
     // 写入测试数据到zip文件
-    let options: FileOptions<()> = FileOptions::default()
-        .compression_method(CompressionMethod::Stored);
+    let options: FileOptions<()> =
+        FileOptions::default().compression_method(CompressionMethod::Stored);
 
     zip.start_file("weight1", options).unwrap();
     zip.write_all(&buf).unwrap();
@@ -159,7 +159,7 @@ fn test_load_pnnx_zip_bin() {
 
     // 加载并验证结果
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map).unwrap();
-    
+
     assert!(result.contains_key("weight1"));
     let array = &result["weight1"];
     assert_eq!(array.shape(), &[2, 2]);

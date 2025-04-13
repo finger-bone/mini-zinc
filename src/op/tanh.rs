@@ -1,4 +1,7 @@
-use super::{conf::{self, FromZOpConf}, layer::Forward};
+use super::{
+    conf::{self, FromZOpConf},
+    layer::Forward,
+};
 use anyhow::{Ok, Result};
 use ocl::ProQue;
 
@@ -10,16 +13,22 @@ impl Forward for TanhLayer {
     fn forward(&self, input: &Vec<ndarray::ArrayD<f32>>) -> Vec<ndarray::ArrayD<f32>> {
         // Only process the first element
         let input = &input[0];
-        let output_buffer = self.pro_que.buffer_builder::<f32>()
+        let output_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(input.len())
             .build()
             .unwrap();
-        let input_buffer = self.pro_que.buffer_builder::<f32>()
+        let input_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(input.len())
             .copy_host_slice(input.as_slice().unwrap())
             .build()
             .unwrap();
-        let kernel = self.pro_que.kernel_builder("tanh")
+        let kernel = self
+            .pro_que
+            .kernel_builder("tanh")
             .arg(&input_buffer)
             .arg(&output_buffer)
             .build()
@@ -29,7 +38,10 @@ impl Forward for TanhLayer {
         }
 
         let mut output = ndarray::ArrayD::zeros(input.raw_dim());
-        output_buffer.read(output.as_slice_mut().unwrap()).enq().unwrap();
+        output_buffer
+            .read(output.as_slice_mut().unwrap())
+            .enq()
+            .unwrap();
         vec![output]
     }
 }
@@ -39,6 +51,12 @@ impl FromZOpConf for conf::TanhConf {
         let conf::ZOpConf::Tanh(lconf) = zopconf else {
             return Err(anyhow::anyhow!("not Tanh"));
         };
-        Ok(Box::new(TanhLayer { pro_que: ProQue::builder().src(include_str!("./tanh.cl")).dims(256).build().unwrap() }))
+        Ok(Box::new(TanhLayer {
+            pro_que: ProQue::builder()
+                .src(include_str!("./tanh.cl"))
+                .dims(256)
+                .build()
+                .unwrap(),
+        }))
     }
 }

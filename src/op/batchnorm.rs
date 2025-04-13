@@ -1,7 +1,10 @@
-use super::{conf::{self, FromZOpConf}, layer::Forward};
+use super::{
+    conf::{self, FromZOpConf},
+    layer::Forward,
+};
 use anyhow::{Ok, Result};
-use ocl::ProQue;
 use ndarray::ArrayD;
+use ocl::ProQue;
 
 pub struct BatchNormLayer {
     pub lconf: conf::BatchNormConf,
@@ -20,42 +23,56 @@ impl Forward for BatchNormLayer {
         let batch_size = shape[0];
         let channels = shape[1];
         let spatial_size = input.len() / (batch_size * channels);
-        
-        let output_buffer = self.pro_que.buffer_builder::<f32>()
+
+        let output_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(input.len())
             .build()
             .unwrap();
-        let input_buffer = self.pro_que.buffer_builder::<f32>()
+        let input_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(input.len())
             .copy_host_slice(input.as_slice().unwrap())
             .build()
             .unwrap();
-        
-        let mean_buffer = self.pro_que.buffer_builder::<f32>()
+
+        let mean_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(channels)
             .copy_host_slice(self.running_mean.as_slice().unwrap())
             .build()
             .unwrap();
-        
-        let var_buffer = self.pro_que.buffer_builder::<f32>()
+
+        let var_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(channels)
             .copy_host_slice(self.running_var.as_slice().unwrap())
             .build()
             .unwrap();
-        
-        let gamma_buffer = self.pro_que.buffer_builder::<f32>()
+
+        let gamma_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(channels)
             .copy_host_slice(self.gamma.as_slice().unwrap())
             .build()
             .unwrap();
-        
-        let beta_buffer = self.pro_que.buffer_builder::<f32>()
+
+        let beta_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
             .len(channels)
             .copy_host_slice(self.beta.as_slice().unwrap())
             .build()
             .unwrap();
-        
-        let kernel = self.pro_que.kernel_builder("batchnorm")
+
+        let kernel = self
+            .pro_que
+            .kernel_builder("batchnorm")
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(&mean_buffer)
@@ -67,13 +84,16 @@ impl Forward for BatchNormLayer {
             .arg(spatial_size as i32)
             .build()
             .unwrap();
-        
+
         unsafe {
             kernel.enq().unwrap();
         }
 
         let mut output = ArrayD::zeros(input.raw_dim());
-        output_buffer.read(output.as_slice_mut().unwrap()).enq().unwrap();
+        output_buffer
+            .read(output.as_slice_mut().unwrap())
+            .enq()
+            .unwrap();
         vec![output]
     }
 }
@@ -83,17 +103,21 @@ impl FromZOpConf for conf::BatchNormConf {
         let conf::ZOpConf::BatchNorm(lconf) = zopconf else {
             return Err(anyhow::anyhow!("not BatchNorm"));
         };
-        
+
         // Extract channels from the configuration
         let channels = lconf.num_features;
         let gamma = ArrayD::ones(ndarray::IxDyn(&[channels]));
         let beta = ArrayD::zeros(ndarray::IxDyn(&[channels]));
         let running_mean = ArrayD::zeros(ndarray::IxDyn(&[channels]));
         let running_var = ArrayD::ones(ndarray::IxDyn(&[channels]));
-        
-        Ok(Box::new(BatchNormLayer { 
-            lconf, 
-            pro_que: ProQue::builder().src(include_str!("./batchnorm.cl")).dims(256).build().unwrap(),
+
+        Ok(Box::new(BatchNormLayer {
+            lconf,
+            pro_que: ProQue::builder()
+                .src(include_str!("./batchnorm.cl"))
+                .dims(256)
+                .build()
+                .unwrap(),
             gamma,
             beta,
             running_mean,

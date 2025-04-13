@@ -62,14 +62,20 @@ fn test_expr_layer_forward() -> Result<()> {
         ast: Expr::parse("mul(@0,@1)")?,
     };
     let output = layer.forward(&inputs);
-    assert_eq!(output[0], Array1::from_vec(vec![4.0, 10.0, 18.0]).into_dyn());
+    assert_eq!(
+        output[0],
+        Array1::from_vec(vec![4.0, 10.0, 18.0]).into_dyn()
+    );
 
     // Test complex expression
     let layer = ExprLayer {
         ast: Expr::parse("add(mul(@0,@1),add(@0,@1))")?,
     };
     let output = layer.forward(&inputs);
-    assert_eq!(output[0], Array1::from_vec(vec![9.0, 17.0, 27.0]).into_dyn());
+    assert_eq!(
+        output[0],
+        Array1::from_vec(vec![9.0, 17.0, 27.0]).into_dyn()
+    );
 
     Ok(())
 }

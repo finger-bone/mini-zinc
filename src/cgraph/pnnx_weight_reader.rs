@@ -1,10 +1,10 @@
+use byteorder::{LittleEndian, ReadBytesExt};
+use ndarray::{ArrayD, IxDyn};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Cursor};
+use std::io::{Cursor, Read};
 use std::path::Path;
 use zip::ZipArchive;
-use ndarray::{ArrayD, IxDyn};
-use byteorder::{LittleEndian, ReadBytesExt};
 
 pub fn load_pnnx_zip_bin<P: AsRef<Path>>(
     zip_path: P,
@@ -42,8 +42,7 @@ pub fn load_pnnx_zip_bin<P: AsRef<Path>>(
         }
 
         // 构建 ndarray
-        let array = ArrayD::from_shape_vec(IxDyn(&shape), floats)
-            .expect("shape and data mismatch");
+        let array = ArrayD::from_shape_vec(IxDyn(&shape), floats).expect("shape and data mismatch");
 
         tensor_map.insert(name, array);
     }

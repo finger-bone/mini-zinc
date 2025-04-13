@@ -1,9 +1,8 @@
-
-use ndarray::ArrayD;
 use crate::op::{
     conf::{FromZOpConf, ViewConf, ZOpConf},
     layer::Forward,
 };
+use ndarray::ArrayD;
 
 #[test]
 fn test_view_forward() {
@@ -28,15 +27,11 @@ fn test_view_forward() {
     let layer = ZOpConf::View(view);
     let layer = ViewConf::from_zopconf(layer).unwrap();
 
-    let input = ArrayD::from_shape_vec(
-        vec![2, 2, 2],
-        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-    ).unwrap();
+    let input = ArrayD::from_shape_vec(vec![2, 2, 2], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+        .unwrap();
     let output = layer.forward(&vec![input]);
-    let expected = ArrayD::from_shape_vec(
-        vec![4, 2],
-        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-    ).unwrap();
+    let expected =
+        ArrayD::from_shape_vec(vec![4, 2], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]).unwrap();
     assert_eq!(output[0], expected);
 }
 
