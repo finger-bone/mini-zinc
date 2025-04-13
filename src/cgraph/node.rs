@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, fmt::Debug, path::Path};
 
 use anyhow::{Ok, Result, anyhow};
 use nom::Parser;
@@ -33,6 +33,17 @@ pub enum CGNodeOp {
     Op(Box<dyn Forward>),
 }
 
+impl Debug for CGNodeOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CGNodeOp::Input => write!(f, "Input"),
+            CGNodeOp::Output => write!(f, "Output"),
+            CGNodeOp::Op(_) => write!(f, "Op(Unknown)"),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct CGNode {
     pub name: String,
     pub op: CGNodeOp,

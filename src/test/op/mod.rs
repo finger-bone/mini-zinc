@@ -6,3 +6,4 @@ pub mod linear_test;
 pub mod pool2d_test;
 pub mod relu_test;
 pub mod view_test;
+pub mod node_test;
