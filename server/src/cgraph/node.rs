@@ -10,8 +10,7 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, Conv2dConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf,
-            LinearConf, Pool2dConf, PoolType, ReLUConf,
+            AdaptivePool2dConf, Conv2dConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, Pool2dConf, PoolType, ReLUConf, TransposeConf, ViewConf
         },
         layer::{Forward, TensorValue},
     },
@@ -245,6 +244,32 @@ impl CGNode {
                 ))
             }
             "F.gelu" => Ok(CGNodeOp::Op(GeLUConf {}.to_layer().unwrap())),
+            // Tensor.view              Tensor.view_19           1 1 13 14 shape=(1,482,12,64) $input=13 #13=(1,482,768)f32 #14=(1,482,12,64)f32
+            "Tensor.view" => {
+                let (_, output_shape) = parse_usize_tuple.parse(
+                    line.get("shape", PNNXKVType::Attr).unwrap().value.as_str(),
+                ).unwrap();
+                Ok(CGNodeOp::Op(
+                    ViewConf {
+                        output_shape,
+                    }
+                    .to_layer()
+                    .unwrap(),
+                ))
+            }
+            // torch.transpose          torch.transpose_45       1 1 20 21 dim0=1 dim1=2 $input=20 #20=(1,482,12,64)f32 #21=(1,12,482,64)f32
+            "torch.transpose" => {
+                let (_, dim0) = parse_isize
+                    .parse(&line.get("dim0", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
+                let (_, dim1) = parse_isize
+                    .parse(&line.get("dim1", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
+                Ok(CGNodeOp::Op(TransposeConf {
+                    dim0,
+                    dim1,
+                }.to_layer().unwrap()))
+            }
             any => Err(anyhow!("Unsupported operator type {}", any)),
         }
         .unwrap();

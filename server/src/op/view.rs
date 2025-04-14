@@ -16,7 +16,7 @@ impl Forward for ViewLayer {
         };
 
         // Check if the total number of elements matches
-        let input_size: usize = self.lconf.input_shape.iter().product();
+        let input_size: usize = input.shape().iter().product();
         let output_size: usize = self.lconf.output_shape.iter().product();
         assert_eq!(
             input_size, output_size,

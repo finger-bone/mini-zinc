@@ -11,4 +11,5 @@ pub mod layernorm;
 pub mod linear;
 pub mod pool2d;
 pub mod relu;
+pub mod transpose;
 pub mod view;

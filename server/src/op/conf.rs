@@ -56,7 +56,6 @@ pub struct LinearConf {
 }
 
 pub struct ViewConf {
-    pub input_shape: Vec<usize>,
     pub output_shape: Vec<usize>,
 }
 
@@ -79,8 +78,12 @@ pub struct LayerNormConf {
     pub bias: TensorValue,
 }
 
-// Add GeLU configuration struct
 pub struct GeLUConf {}
+
+pub struct TransposeConf {
+    pub dim0: isize,
+    pub dim1: isize,
+}
 
 pub trait ToLayer {
     fn to_layer(self: Self) -> Result<Box<dyn Forward>>;

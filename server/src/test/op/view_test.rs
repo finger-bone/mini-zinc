@@ -8,7 +8,7 @@ use ndarray::ArrayD;
 fn test_view_forward() {
     // 测试2D到1D的重塑
     let view = ViewConf {
-        input_shape: vec![2, 3],
+        // input_shape: vec![2, 3],
         output_shape: vec![6],
     };
     let layer = view.to_layer().unwrap();
@@ -26,7 +26,7 @@ fn test_view_forward() {
 
     // 测试3D到2D的重塑
     let view = ViewConf {
-        input_shape: vec![2, 2, 2],
+        // input_shape: vec![2, 2, 2],
         output_shape: vec![4, 2],
     };
     let layer = view.to_layer().unwrap();
@@ -49,7 +49,7 @@ fn test_view_forward() {
 #[should_panic(expected = "Input and output shapes must have the same number of elements")]
 fn test_view_shape_mismatch() {
     let view = ViewConf {
-        input_shape: vec![2, 3],
+        // input_shape: vec![2, 3],
         output_shape: vec![5], // 元素数量不匹配
     };
     let layer = view.to_layer().unwrap();
