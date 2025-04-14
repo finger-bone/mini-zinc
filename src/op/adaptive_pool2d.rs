@@ -51,6 +51,7 @@ impl Forward for AdaptivePool2dLayer {
         let kernel = self
             .pro_que
             .kernel_builder("adaptive_pool")
+            .global_work_size(batch_size * channels * output_height * output_width) // 添加全局工作尺寸
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(batch_size as i32)

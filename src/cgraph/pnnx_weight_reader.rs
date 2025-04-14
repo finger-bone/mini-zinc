@@ -63,7 +63,7 @@ pub fn load_pnnx_zip_bin<P: AsRef<Path>>(
                 unimplemented!()
             }
             _ => {
-                unimplemented!()
+                panic!("Data type not found")
             }
         }
 

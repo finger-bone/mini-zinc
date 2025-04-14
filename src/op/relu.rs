@@ -32,6 +32,7 @@ impl Forward for ReLULayer {
         let kernel = self
             .pro_que
             .kernel_builder("relu")
+            .global_work_size(input.len())
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(self.lconf.threshold)
@@ -56,8 +57,8 @@ impl ToLayer for conf::ReLUConf {
         Ok(Box::new(ReLULayer {
             lconf,
             pro_que: ProQue::builder()
-                .src(include_str!("./relu.cl"))
                 .dims(256)
+                .src(include_str!("./relu.cl"))
                 .build()
                 .unwrap(),
         }))

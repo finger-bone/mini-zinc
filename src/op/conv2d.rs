@@ -39,10 +39,11 @@ impl Forward for Conv2dLayer {
             (input_width + 2 * self.lconf.padding[1] - dilated_kernel_w) / self.lconf.stride[1] + 1;
 
         // Create output buffer
+        let output_size = batch_size * self.lconf.filters * output_height * output_width;
         let output_buffer = self
             .pro_que
             .buffer_builder::<f32>()
-            .len(batch_size * self.lconf.filters * output_height * output_width)
+            .len(output_size)
             .build()
             .unwrap();
 
@@ -87,6 +88,7 @@ impl Forward for Conv2dLayer {
         let kernel = self
             .pro_que
             .kernel_builder("conv2d")
+            .global_work_size(output_size)
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(&weights_buffer)
@@ -136,8 +138,8 @@ impl ToLayer for conf::Conv2dConf {
         Ok(Box::new(Conv2dLayer {
             lconf,
             pro_que: ProQue::builder()
-                .src(include_str!("./conv.cl"))
                 .dims(256)
+                .src(include_str!("./conv2d.cl"))
                 .build()
                 .unwrap(),
         }))

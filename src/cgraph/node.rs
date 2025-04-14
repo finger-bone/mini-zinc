@@ -108,8 +108,8 @@ impl CGNode {
                         padding,
                         groups,
                         filters: out_channels,
-                        weights: weights.get("weight").unwrap().clone(),
-                        bias: weights.get("bias").unwrap().clone(),
+                        weights: weights.get(&line.get_tensor_key("weight")).unwrap().clone(),
+                        bias: weights.get(&line.get_tensor_key("bias")).unwrap().clone(),
                     }
                     .to_layer()
                     .unwrap(),
@@ -198,14 +198,17 @@ impl CGNode {
                     LinearConf {
                         in_features,
                         out_features,
-                        weights: weights.get("weight").unwrap().clone(),
-                        bias: weights.get("bias").unwrap().clone(),
+                        weights: weights.get(&line.get_tensor_key("weight")).unwrap().clone(),
+                        bias: weights.get(&line.get_tensor_key("bias")).unwrap().clone(),
                     }
                     .to_layer()
                     .unwrap(),
                 ))
+            },
+            "pnnx.Output" => {
+                Ok(CGNodeOp::Output)
             }
-            _ => Err(anyhow!("Unsupported operator type.")),
+            any => Err(anyhow!("Unsupported operator type {}", any)),
         }
         .unwrap();
 

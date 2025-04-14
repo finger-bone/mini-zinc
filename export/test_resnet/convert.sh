@@ -1,0 +1,1 @@
+pnnx test_resnet.pt inputshape="[1,3,224,224]" pnnxparam=test_resnet.pnnx.param pnnxbin=test_resnet.pnnx.bin

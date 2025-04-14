@@ -62,6 +62,7 @@ impl Forward for Pool2dLayer {
         let kernel = self
             .pro_que
             .kernel_builder("pool")
+            .global_work_size(batch_size * channels * output_height * output_width)
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(batch_size as i32)
@@ -106,8 +107,8 @@ impl ToLayer for conf::Pool2dConf {
         Ok(Box::new(Pool2dLayer {
             lconf,
             pro_que: ProQue::builder()
-                .src(include_str!("./pool2d.cl"))
                 .dims(256)
+                .src(include_str!("./pool2d.cl"))
                 .build()
                 .unwrap(),
         }))

@@ -75,6 +75,7 @@ impl Forward for BatchNormLayer {
         let kernel = self
             .pro_que
             .kernel_builder("batchnorm")
+            .global_work_size(input.len())
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(&mean_buffer)
@@ -114,8 +115,8 @@ impl ToLayer for conf::BatchNormConf {
         Ok(Box::new(BatchNormLayer {
             lconf,
             pro_que: ProQue::builder()
-                .src(include_str!("./batchnorm.cl"))
                 .dims(256)
+                .src(include_str!("./batchnorm.cl"))
                 .build()
                 .unwrap(),
             gamma,

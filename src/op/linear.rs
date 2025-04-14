@@ -65,7 +65,10 @@ impl Forward for LinearLayer {
             .unwrap();
 
         let weights = match &self.lconf.weights {
-            TensorValue::Float32(weights) => weights,
+            TensorValue::Float32(weights) => {
+                assert_eq!(weights.shape(), &[self.lconf.out_features, self.lconf.in_features]);
+                weights
+            }
             _ => return Err(anyhow::anyhow!("Unsupported weights type for Linear")),
         };
         // Create weights buffer
@@ -94,6 +97,7 @@ impl Forward for LinearLayer {
         let kernel = self
             .pro_que
             .kernel_builder("linear")
+            .global_work_size([batch_size * self.lconf.out_features as usize])
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(&weights_buffer)
@@ -103,9 +107,10 @@ impl Forward for LinearLayer {
             .arg(self.lconf.out_features as i32)
             .build()
             .unwrap();
-
         unsafe {
-            kernel.enq().unwrap();
+            kernel
+                .enq()
+                .unwrap();
         }
 
         // Read the result from buffer
@@ -135,8 +140,8 @@ impl ToLayer for conf::LinearConf {
         Ok(Box::new(LinearLayer {
             lconf,
             pro_que: ProQue::builder()
-                .src(include_str!("./linear.cl"))
                 .dims(256)
+                .src(include_str!("./linear.cl"))
                 .build()
                 .unwrap(),
         }))

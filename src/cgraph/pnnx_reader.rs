@@ -26,6 +26,7 @@ pub struct PNNXReaderResult {
     pub lines: Vec<PNNXLine>,
 }
 
+#[derive(Clone, Debug)]
 pub struct PNNXLine {
     pub op_type: String,
     pub op_name: String,
@@ -45,7 +46,7 @@ impl PNNXLine {
         panic!("key not found")
     }
 
-    pub fn get_weight_key(&self, key: &str) -> String {
+    pub fn get_tensor_key(&self, key: &str) -> String {
         format!("{}.{}", self.op_name, key)
     }
 }
@@ -198,8 +199,8 @@ impl PNNXReaderResult {
                 match kv.kv_type {
                     PNNXKVType::Tensor => {
                         let (_, (shape, dtype)) = parse_shape_and_dtype(&kv.value).unwrap();
-                        shape_map.insert(line.get_weight_key(&kv.key), shape);
-                        dtype_map.insert(line.get_weight_key(&kv.key), dtype);
+                        shape_map.insert(line.get_tensor_key(&kv.key), shape);
+                        dtype_map.insert(line.get_tensor_key(&kv.key), dtype);
                     }
                     _ => {
                         continue;

@@ -9,7 +9,4 @@ pub mod flatten;
 pub mod linear;
 pub mod pool2d;
 pub mod relu;
-pub mod sigmoid;
-pub mod softmax;
-pub mod tanh;
 pub mod view;

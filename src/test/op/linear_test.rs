@@ -1,35 +1,61 @@
-use ndarray::ArrayD;
-
 use crate::op::{
     conf::{LinearConf, ToLayer},
     layer::{Forward, TensorValue},
 };
+use ndarray::ArrayD;
 
 #[test]
 fn test_linear_forward() {
-    // Create a simple 2x3 input (batch_size=2, features=3)
-    let input = ArrayD::from_shape_vec(vec![2, 3], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
+    let input = ArrayD::from_shape_vec(
+        vec![2, 3], // batch=2, in_features=3
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+    )
+    .unwrap();
 
-    // Create a linear layer with 3 input features and 2 output features
-    let linear = LinearConf {
+    let linear_conf = LinearConf {
         in_features: 3,
         out_features: 2,
         weights: TensorValue::Float32(
-            ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
+            ArrayD::from_shape_vec(
+                vec![2, 3], // out x in
+                vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+            )
+            .unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
+        bias: TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2], vec![0.5, -0.5]).unwrap(),
+        ),
     };
 
-    let layer = linear.to_layer().unwrap();
-
-    // Forward pass
+    let layer = linear_conf.to_layer().unwrap();
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
     if let TensorValue::Float32(output) = &output[0] {
         assert_eq!(output.shape(), &[2, 2]);
-    } else {
-        panic!("Expected Float32 output");
+        let expected = ArrayD::from_shape_vec(
+            vec![2, 2],
+            vec![
+                (1.0*0.1 + 2.0*0.2 + 3.0*0.3) + 0.5, 
+                (1.0*0.4 + 2.0*0.5 + 3.0*0.6) - 0.5,
+                (4.0*0.1 + 5.0*0.2 +6.0*0.3) + 0.5,
+                (4.0*0.4 + 5.0*0.5 +6.0*0.6) - 0.5
+            ],
+        ).unwrap();
+        assert_eq!(output, expected);
     }
+}
+
+#[test]
+#[should_panic(expected = "Input features dimension must match")]
+fn test_linear_incompatible_input() {
+    let linear_conf = LinearConf {
+        in_features: 4,
+        out_features: 2,
+        weights: TensorValue::Float32(ArrayD::zeros(vec![2,4])),
+        bias: TensorValue::Float32(ArrayD::zeros(vec![2])),
+    };
+    let input = TensorValue::Float32(ArrayD::zeros(vec![1,3]));
+    linear_conf.to_layer().unwrap().forward(&vec![input]);
 }
 
 #[test]
