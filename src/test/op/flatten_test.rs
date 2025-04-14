@@ -1,6 +1,6 @@
 use crate::op::{
     conf::{FlattenConf, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::TensorValue,
 };
 use ndarray::ArrayD;
 

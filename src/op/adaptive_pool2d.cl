@@ -16,48 +16,37 @@ void adaptive_pool(__global float *input, __global float *output,
     if (out_n >= batch_size || out_c >= channels || out_h >= output_height || out_w >= output_width) {
         return;
     }
-    
-    // Calculate stride and kernel size for adaptive pooling
-    const int stride_h = input_height / output_height;
-    const int stride_w = input_width / output_width;
-    const int kernel_h = input_height - (output_height - 1) * stride_h;
-    const int kernel_w = input_width - (output_width - 1) * stride_w;
-    
-    // Initialize accumulator based on pool type
+
+    // Compute input region for this output cell (adaptive logic)
+    const int in_h_start = (int)floor((float)(out_h * input_height) / output_height);
+    const int in_h_end   = (int)ceil((float)((out_h + 1) * input_height) / output_height);
+    const int in_w_start = (int)floor((float)(out_w * input_width) / output_width);
+    const int in_w_end   = (int)ceil((float)((out_w + 1) * input_width) / output_width);
+
+    // Initialize accumulator
     float acc = (pool_type == 0) ? -FLT_MAX : 0.0f;
     int count = 0;
-    
-    // Calculate start position for this output cell
-    const int start_h = out_h * stride_h;
-    const int start_w = out_w * stride_w;
-    
-    // Perform pooling
-    for (int kh = 0; kh < kernel_h; kh++) {
-        for (int kw = 0; kw < kernel_w; kw++) {
-            // Calculate input position
-            int in_h = start_h + kh;
-            int in_w = start_w + kw;
-            
-            // Skip if outside input bounds
-            if (in_h >= 0 && in_h < input_height && in_w >= 0 && in_w < input_width) {
-                // Input index
-                int in_idx = ((out_n * channels + out_c) * input_height + in_h) * input_width + in_w;
-                
-                if (pool_type == 0) { // Max pooling
-                    acc = max(acc, input[in_idx]);
-                } else { // Average pooling
-                    acc += input[in_idx];
-                    count++;
-                }
+
+    // Perform pooling over the region
+    for (int in_h = in_h_start; in_h < in_h_end; ++in_h) {
+        for (int in_w = in_w_start; in_w < in_w_end; ++in_w) {
+            int in_idx = ((out_n * channels + out_c) * input_height + in_h) * input_width + in_w;
+            float val = input[in_idx];
+
+            if (pool_type == 0) {
+                acc = fmax(acc, val);
+            } else {
+                acc += val;
+                count++;
             }
         }
     }
-    
+
     // Finalize average pooling
     if (pool_type == 1 && count > 0) {
         acc /= count;
     }
-    
-    // Write output
+
+    // Write result
     output[pos] = acc;
 }

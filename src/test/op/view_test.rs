@@ -1,6 +1,6 @@
 use crate::op::{
     conf::{ToLayer, ViewConf},
-    layer::{Forward, TensorValue},
+    layer::TensorValue,
 };
 use ndarray::ArrayD;
 

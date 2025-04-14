@@ -2,7 +2,7 @@ use ndarray::ArrayD;
 
 use crate::op::{
     conf::{AdaptivePool2dConf, PoolType, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::TensorValue,
 };
 
 #[test]

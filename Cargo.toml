@@ -7,11 +7,12 @@ edition = "2024"
 anyhow = "1.0.97"
 bytemuck = "1.22.0"
 byteorder = "1.5.0"
-half = "2.6.0"
-ndarray = { version = "0.16.1", features = ["rayon"]}
+half = { version = "2.6.0", features = ["serde"] }
+ndarray = { version = "0.16.1", features = ["rayon", "serde"]}
 nom = "8.0.0"
 ocl = "0.19.7"
 rand = "0.9.0"
+serde = { version = "1.0.219", features = ["derive"]}
 tempfile = "3.19.1"
 zip = { version = "2.6.1", features = ["deflate"]}
 

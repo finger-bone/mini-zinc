@@ -37,7 +37,6 @@ impl Debug for CGNodeOp {
     }
 }
 
-#[derive(Debug)]
 pub struct CGNode {
     pub name: String,
     pub op: CGNodeOp,

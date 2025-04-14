@@ -1,8 +1,6 @@
 use crate::cgraph::pnnx_weight_reader::{PNNXBinDataType, load_pnnx_zip_bin};
 use crate::op::layer::TensorValue;
 use byteorder::{LittleEndian, WriteBytesExt};
-use half::{bf16, f16};
-use ndarray::ArrayD;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Cursor, Write};

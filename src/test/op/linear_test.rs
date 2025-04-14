@@ -1,6 +1,6 @@
 use crate::op::{
     conf::{LinearConf, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::TensorValue,
 };
 use ndarray::ArrayD;
 
@@ -55,7 +55,7 @@ fn test_linear_incompatible_input() {
         bias: TensorValue::Float32(ArrayD::zeros(vec![2])),
     };
     let input = TensorValue::Float32(ArrayD::zeros(vec![1,3]));
-    linear_conf.to_layer().unwrap().forward(&vec![input]);
+    linear_conf.to_layer().unwrap().forward(&vec![input]).unwrap();
 }
 
 #[test]

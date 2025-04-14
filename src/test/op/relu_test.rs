@@ -2,7 +2,7 @@ use ndarray::ArrayD;
 
 use crate::op::{
     conf::{ReLUConf, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::TensorValue,
 };
 
 #[test]

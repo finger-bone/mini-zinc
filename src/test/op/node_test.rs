@@ -2,10 +2,7 @@ use crate::cgraph::{
     node::{CGNode, CGNodeOp},
     pnnx_reader::{PNNXKV, PNNXKVType, PNNXLine},
 };
-use crate::op::{
-    conf::{FlattenConf, ToLayer},
-    layer::TensorValue,
-};
+use crate::op::layer::TensorValue;
 use std::collections::HashMap;
 
 #[test]
