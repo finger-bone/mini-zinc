@@ -1,0 +1,18 @@
+[project]
+authors = ["Zend <zendwang040302@outlook.com>"]
+channels = ["conda-forge"]
+name = "client"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.11.*"
+
+[pypi-dependencies]
+torchvision = ">=0.21.0, <0.22"
+streamlit = ">=1.44.1, <2"
+plotly = ">=6.0.1, <7"
+requests = ">=2.32.3, <3"
+watchdog = ">=6.0.0, <7"

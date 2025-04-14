@@ -61,7 +61,14 @@ impl ComputationGraph {
 impl ComputationGraph {
     pub fn compute(&self, inputs: &HashMap<BlobIdx, TensorValue>) -> Result<HashMap<NodeIdx, TensorValue>> {
         let mut blob_store = HashMap::<BlobIdx, Option<TensorValue>>::new();
-        let consumed_by = &self.consumed_by.clone();
+        let consumed_by = &self.consumed_by;
+
+        let mut remaining_feeding_times_counter = consumed_by.iter().map(
+            |(blob_idx, consumed_by_list)| {
+                (blob_idx, consumed_by_list.len())
+            },
+        ).collect::<HashMap<_, _>>();
+
         let mut result = HashMap::<NodeIdx, TensorValue>::new();
 
         let mut feeding_to = Vec::<NodeIdx>::new();
@@ -113,6 +120,18 @@ impl ComputationGraph {
                                 blob_store.get(input_idx).unwrap().clone().unwrap()
                             },
                         ).collect::<Vec<_>>();
+
+                        node.inputs.iter().for_each(|input_idx| {
+                            let remaining_feeding_times = remaining_feeding_times_counter.get_mut(input_idx).unwrap();
+                            *remaining_feeding_times -= 1;
+                            if *remaining_feeding_times == 0 {
+                                // take and drop the reference
+                                if let Some(_) = blob_store.get(input_idx).take() {
+
+                                }
+                            }
+                        });
+
                         let output_tensors = layer.forward(&input_tensors).unwrap();
                         for i in 0..node.outputs.len() {
                             let output_idx = node.outputs[i];

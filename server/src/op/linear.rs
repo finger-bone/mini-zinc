@@ -140,7 +140,7 @@ impl ToLayer for conf::LinearConf {
         Ok(Box::new(LinearLayer {
             lconf,
             pro_que: ProQue::builder()
-                .dims(256)
+                .dims(512)
                 .src(include_str!("./linear.cl"))
                 .build()
                 .unwrap(),

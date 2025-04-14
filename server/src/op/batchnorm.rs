@@ -115,7 +115,7 @@ impl ToLayer for conf::BatchNormConf {
         Ok(Box::new(BatchNormLayer {
             lconf,
             pro_que: ProQue::builder()
-                .dims(256)
+                .dims(512)
                 .src(include_str!("./batchnorm.cl"))
                 .build()
                 .unwrap(),
