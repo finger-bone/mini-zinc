@@ -22,9 +22,7 @@ fn test_linear_forward() {
             )
             .unwrap(),
         ),
-        bias: TensorValue::Float32(
-            ArrayD::from_shape_vec(vec![2], vec![0.5, -0.5]).unwrap(),
-        ),
+        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.5, -0.5]).unwrap()),
     };
 
     let layer = linear_conf.to_layer().unwrap();
@@ -35,12 +33,13 @@ fn test_linear_forward() {
         let expected = ArrayD::from_shape_vec(
             vec![2, 2],
             vec![
-                (1.0*0.1 + 2.0*0.2 + 3.0*0.3) + 0.5, 
-                (1.0*0.4 + 2.0*0.5 + 3.0*0.6) - 0.5,
-                (4.0*0.1 + 5.0*0.2 +6.0*0.3) + 0.5,
-                (4.0*0.4 + 5.0*0.5 +6.0*0.6) - 0.5
+                (1.0 * 0.1 + 2.0 * 0.2 + 3.0 * 0.3) + 0.5,
+                (1.0 * 0.4 + 2.0 * 0.5 + 3.0 * 0.6) - 0.5,
+                (4.0 * 0.1 + 5.0 * 0.2 + 6.0 * 0.3) + 0.5,
+                (4.0 * 0.4 + 5.0 * 0.5 + 6.0 * 0.6) - 0.5,
             ],
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(output, expected);
     }
 }
@@ -51,11 +50,15 @@ fn test_linear_incompatible_input() {
     let linear_conf = LinearConf {
         in_features: 4,
         out_features: 2,
-        weights: TensorValue::Float32(ArrayD::zeros(vec![2,4])),
+        weights: TensorValue::Float32(ArrayD::zeros(vec![2, 4])),
         bias: TensorValue::Float32(ArrayD::zeros(vec![2])),
     };
-    let input = TensorValue::Float32(ArrayD::zeros(vec![1,3]));
-    linear_conf.to_layer().unwrap().forward(&vec![input]).unwrap();
+    let input = TensorValue::Float32(ArrayD::zeros(vec![1, 3]));
+    linear_conf
+        .to_layer()
+        .unwrap()
+        .forward(&vec![input])
+        .unwrap();
 }
 
 #[test]

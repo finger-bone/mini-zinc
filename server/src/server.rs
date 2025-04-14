@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread;
-use std::time::Duration;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -93,12 +92,10 @@ impl InferenceServer {
         thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                let status_route = warp::path("status")
-                    .and(warp::get())
-                    .map(move || {
-                        let status = status_thread.read().unwrap();
-                        warp::reply::json(&*status)
-                    });
+                let status_route = warp::path("status").and(warp::get()).map(move || {
+                    let status = status_thread.read().unwrap();
+                    warp::reply::json(&*status)
+                });
 
                 warp::serve(status_route).run(([127, 0, 0, 1], 3031)).await;
             });
@@ -116,18 +113,20 @@ impl InferenceServer {
                 .and_then(move |request: InferenceRequest| {
                     let infer_status = infer_status.clone();
                     let infer_model = infer_model.clone();
-                    
+
                     async move {
                         // 检查服务器是否忙碌
                         {
                             let mut status = infer_status.write().unwrap();
                             if status.is_busy {
-                                return Ok::<_, warp::Rejection>(warp::reply::json(&InferenceResponse {
-                                    outputs: HashMap::new(),
-                                    success: false,
-                                    message: "Server is busy".to_string(),
-                                    duration_ms: 0,
-                                }));
+                                return Ok::<_, warp::Rejection>(warp::reply::json(
+                                    &InferenceResponse {
+                                        outputs: HashMap::new(),
+                                        success: false,
+                                        message: "Server is busy".to_string(),
+                                        duration_ms: 0,
+                                    },
+                                ));
                             }
                             status.is_busy = true;
                         }

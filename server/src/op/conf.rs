@@ -70,6 +70,18 @@ pub struct FlattenConf {
     pub end_dim: isize,
 }
 
+// Add LayerNorm configuration struct
+pub struct LayerNormConf {
+    pub normalized_shape: Vec<usize>, // e.g. [768]
+    pub eps: f32,
+    pub elementwise_affine: bool,
+    pub weight: TensorValue,
+    pub bias: TensorValue,
+}
+
+// Add GeLU configuration struct
+pub struct GeLUConf {}
+
 pub trait ToLayer {
     fn to_layer(self: Self) -> Result<Box<dyn Forward>>;
 }

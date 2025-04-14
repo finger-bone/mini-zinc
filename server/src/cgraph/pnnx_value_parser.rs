@@ -1,4 +1,5 @@
 use nom::character::complete::{isize, usize};
+use nom::number::complete::recognize_float;
 use nom::{
     IResult, Parser,
     bytes::complete::tag,
@@ -32,4 +33,15 @@ pub fn parse_usize(src: &str) -> IResult<&str, usize> {
 
 pub fn parse_isize(src: &str) -> IResult<&str, isize> {
     isize.parse(src)
+}
+
+pub fn parse_bool(src: &str) -> IResult<&str, bool> {
+    let parse_true = tag("True").map(|_| true);
+    let parse_false = tag("False").map(|_| false);
+
+    parse_true.or(parse_false).parse(src)
+}
+
+pub fn parse_f32(input: &str) -> IResult<&str, f32> {
+    map_res(recognize_float, |s: &str| s.parse::<f32>()).parse(input)
 }

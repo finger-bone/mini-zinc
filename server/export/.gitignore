@@ -9,4 +9,7 @@
 *_pnnx.py
 *.onnx
 *.pnnx
-llm/SmolLM2-135M-Instruct
+smollm/SmolLM2-135M-Instruct
+tiny-llama/TinyLlama_v1.1
+bert/distilbert-base-uncased
+*.txt

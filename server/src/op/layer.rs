@@ -2,7 +2,6 @@ use anyhow::Result;
 use half::{bf16, f16};
 use ndarray::ArrayD;
 
-
 pub trait Forward: Send + Sync {
     fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>>;
 }

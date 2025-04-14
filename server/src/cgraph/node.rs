@@ -10,8 +10,8 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, Conv2dConf, ExprConf, FlattenConf, LinearConf, Pool2dConf,
-            PoolType, ReLUConf,
+            AdaptivePool2dConf, Conv2dConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf,
+            LinearConf, Pool2dConf, PoolType, ReLUConf,
         },
         layer::{Forward, TensorValue},
     },
@@ -19,7 +19,7 @@ use crate::{
 
 use crate::op::conf::ToLayer;
 
-use super::pnnx_value_parser::{parse_isize, parse_usize_tuple};
+use super::pnnx_value_parser::{parse_bool, parse_f32, parse_isize, parse_usize_tuple};
 
 pub enum CGNodeOp {
     Input,
@@ -203,10 +203,48 @@ impl CGNode {
                     .to_layer()
                     .unwrap(),
                 ))
-            },
-            "pnnx.Output" => {
-                Ok(CGNodeOp::Output)
             }
+            "pnnx.Output" => Ok(CGNodeOp::Output),
+            // nn.LayerNorm             model.distilbert.transformer.layer.4.output_layer_norm 1 1 111 112 elementwise_affine=True eps=1.000000e-12 normalized_shape=(768) @bias=(768)f32 @weight=(768)f32 #111=(1,482,768)f32 #112=(1,482,768)f32
+            "nn.LayerNorm" => {
+                let (_, eps) = parse_f32
+                    .parse(&line.get("eps", PNNXKVType::Attr).unwrap().value.as_str())
+                    .unwrap();
+                let (_, elementwise_affine) = parse_bool
+                    .parse(
+                        &line
+                            .get("elementwise_affine", PNNXKVType::Attr)
+                            .unwrap()
+                            .value
+                            .as_str(),
+                    )
+                    .unwrap();
+                let (_, normalized_shape) = parse_usize_tuple
+                    .parse(
+                        &line
+                            .get("normalized_shape", PNNXKVType::Attr)
+                            .unwrap()
+                            .value
+                            .as_str(),
+                    )
+                    .unwrap();
+                let layer_norm_weight =
+                    weights.get(&line.get_tensor_key("weight")).unwrap().clone();
+                let layer_norm_bias = weights.get(&line.get_tensor_key("bias")).unwrap().clone();
+
+                Ok(CGNodeOp::Op(
+                    LayerNormConf {
+                        normalized_shape,
+                        eps,
+                        elementwise_affine,
+                        weight: layer_norm_weight,
+                        bias: layer_norm_bias,
+                    }
+                    .to_layer()
+                    .unwrap(),
+                ))
+            }
+            "F.gelu" => Ok(CGNodeOp::Op(GeLUConf {}.to_layer().unwrap())),
             any => Err(anyhow!("Unsupported operator type {}", any)),
         }
         .unwrap();

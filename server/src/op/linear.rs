@@ -66,7 +66,10 @@ impl Forward for LinearLayer {
 
         let weights = match &self.lconf.weights {
             TensorValue::Float32(weights) => {
-                assert_eq!(weights.shape(), &[self.lconf.out_features, self.lconf.in_features]);
+                assert_eq!(
+                    weights.shape(),
+                    &[self.lconf.out_features, self.lconf.in_features]
+                );
                 weights
             }
             _ => return Err(anyhow::anyhow!("Unsupported weights type for Linear")),
@@ -108,9 +111,7 @@ impl Forward for LinearLayer {
             .build()
             .unwrap();
         unsafe {
-            kernel
-                .enq()
-                .unwrap();
+            kernel.enq().unwrap();
         }
 
         // Read the result from buffer

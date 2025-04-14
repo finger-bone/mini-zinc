@@ -1,0 +1,1 @@
+pnnx distilbert-base-uncased-base-fillmask.pt inputshape="[1,482]i64,[1,482]i64" pnnxparam=distilbert-base-uncased-base-fillmask.pnnx.param pnnxbin=distilbert-base-uncased-base-fillmask.pnnx.bin

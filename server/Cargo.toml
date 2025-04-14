@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.97"
+approx = "0.5.1"
 bytemuck = "1.22.0"
 byteorder = "1.5.0"
 half = { version = "2.6.0", features = ["serde"] }
@@ -22,7 +23,3 @@ zip = { version = "2.6.1", features = ["deflate"]}
 
 [dev-dependencies]
 tempfile = "3.19.1"
-
-[[example]]
-name = "client"
-path = "examples/client.rs"

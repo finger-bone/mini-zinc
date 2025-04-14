@@ -105,11 +105,7 @@ fn test_maxpool_value() {
     let input = TensorValue::Float32(
         ArrayD::from_shape_vec(
             vec![1, 1, 3, 3],
-            vec![
-                1.0, 2.0, 3.0,
-                4.0, 5.0, 6.0,
-                7.0, 8.0, 9.0,
-            ],
+            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
         )
         .unwrap(),
     );
@@ -133,8 +129,10 @@ fn test_maxpool_value() {
         // [[2,3],[5,6]] => 6
         // [[4,5],[7,8]] => 8
         // [[5,6],[8,9]] => 9
-        let expected: ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<ndarray::IxDynImpl>> =
-            ArrayD::from_shape_vec(vec![1, 1, 2, 2], vec![5.0, 6.0, 8.0, 9.0]).unwrap();
+        let expected: ndarray::ArrayBase<
+            ndarray::OwnedRepr<f32>,
+            ndarray::Dim<ndarray::IxDynImpl>,
+        > = ArrayD::from_shape_vec(vec![1, 1, 2, 2], vec![5.0, 6.0, 8.0, 9.0]).unwrap();
 
         for i in 0..output_array.len() {
             assert!(
@@ -156,9 +154,10 @@ fn test_maxpool_multi_channel() {
             vec![1, 2, 4, 4],
             vec![
                 // 通道1
-                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
-                // 通道2
-                2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0,
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+                16.0, // 通道2
+                2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
+                17.0,
             ],
         )
         .unwrap(),
@@ -181,15 +180,16 @@ fn test_maxpool_multi_channel() {
             vec![1, 2, 2, 2],
             vec![
                 // 通道1
-                6.0, 8.0, 14.0, 16.0,
-                // 通道2
+                6.0, 8.0, 14.0, 16.0, // 通道2
                 7.0, 9.0, 15.0, 17.0,
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         for i in 0..output_array.len() {
             assert!(
-                (output_array.as_slice().unwrap()[i] - expected.as_slice().unwrap()[i]).abs() < 1e-5
+                (output_array.as_slice().unwrap()[i] - expected.as_slice().unwrap()[i]).abs()
+                    < 1e-5
             );
         }
     }

@@ -207,28 +207,17 @@ fn test_conv2d_value() {
     let input = TensorValue::Float32(
         ArrayD::from_shape_vec(
             vec![1, 1, 3, 3],
-            vec![
-                1.0, 2.0, 3.0,
-                4.0, 5.0, 6.0,
-                7.0, 8.0, 9.0,
-            ],
+            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
         )
         .unwrap(),
     );
 
     // Weights: 1 filter, 1 input channel, 3x3 kernel, all weights = 1.0
-    let weights = TensorValue::Float32(
-        ArrayD::from_shape_vec(
-            vec![1, 1, 3, 3],
-            vec![1.0; 9],
-        )
-        .unwrap(),
-    );
+    let weights =
+        TensorValue::Float32(ArrayD::from_shape_vec(vec![1, 1, 3, 3], vec![1.0; 9]).unwrap());
 
     // Bias: 0.0
-    let bias = TensorValue::Float32(
-        ArrayD::from_shape_vec(vec![1], vec![0.0]).unwrap(),
-    );
+    let bias = TensorValue::Float32(ArrayD::from_shape_vec(vec![1], vec![0.0]).unwrap());
 
     // Conv2d with no padding, stride = 1
     let conv = Conv2dConf {
@@ -253,7 +242,11 @@ fn test_conv2d_value() {
 
         // Manually compute the expected value: sum of 1~9 = 45
         let value = output_array[[0, 0, 0, 0]];
-        assert!((value - 45.0).abs() < 1e-5, "Expected 45.0 but got {}", value);
+        assert!(
+            (value - 45.0).abs() < 1e-5,
+            "Expected 45.0 but got {}",
+            value
+        );
     } else {
         panic!("Expected Float32 output");
     }
@@ -268,13 +261,8 @@ fn test_conv_multi_channel() {
             vec![1, 2, 3, 3],
             vec![
                 // 通道1
-                1.0, 2.0, 3.0,
-                4.0, 5.0, 6.0,
-                7.0, 8.0, 9.0,
-                // 通道2
-                2.0, 3.0, 4.0,
-                5.0, 6.0, 7.0,
-                8.0, 9.0, 10.0,
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, // 通道2
+                2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
             ],
         )
         .unwrap(),
@@ -289,7 +277,7 @@ fn test_conv_multi_channel() {
         dilation: vec![1, 1],
         groups: 1,
         weights: TensorValue::Float32(
-            ArrayD::from_shape_vec(vec![3, 2, 3, 3], vec![0.1; 3*2*3*3]).unwrap(),
+            ArrayD::from_shape_vec(vec![3, 2, 3, 3], vec![0.1; 3 * 2 * 3 * 3]).unwrap(),
         ),
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![3], vec![0.0; 3]).unwrap()),
     };
@@ -306,7 +294,7 @@ fn test_conv_multi_channel() {
 #[test]
 fn test_conv_all_zeros_input() {
     let input = TensorValue::Float32(
-        ArrayD::zeros(vec![1, 3, 224, 224]) // 全零输入
+        ArrayD::zeros(vec![1, 3, 224, 224]), // 全零输入
     );
 
     let conv = Conv2dConf {
@@ -317,10 +305,10 @@ fn test_conv_all_zeros_input() {
         dilation: vec![1, 1],
         groups: 1,
         weights: TensorValue::Float32(
-            ArrayD::ones(vec![1, 3, 3, 3]) // 权重全1
+            ArrayD::ones(vec![1, 3, 3, 3]), // 权重全1
         ),
         bias: TensorValue::Float32(
-            ArrayD::ones(vec![1]) // bias全1
+            ArrayD::ones(vec![1]), // bias全1
         ),
     };
 

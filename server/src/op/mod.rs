@@ -6,6 +6,8 @@ pub mod batchnorm;
 pub mod conv2d;
 pub mod expr;
 pub mod flatten;
+pub mod gelu;
+pub mod layernorm;
 pub mod linear;
 pub mod pool2d;
 pub mod relu;

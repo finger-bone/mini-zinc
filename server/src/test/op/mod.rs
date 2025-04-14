@@ -2,6 +2,8 @@ pub mod adaptive_pool2d_test;
 pub mod conv2d_test;
 pub mod expr_test;
 pub mod flatten_test;
+pub mod gelu_test;
+pub mod layernorm_test;
 pub mod linear_test;
 pub mod node_test;
 pub mod pool2d_test;

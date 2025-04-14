@@ -1,9 +1,15 @@
 use anyhow::Result;
 
-use crate::{cgraph::{node::CGNodeOp, pnnx_reader::PNNXReaderResult}, op::layer::TensorValue};
+use crate::{
+    cgraph::{node::CGNodeOp, pnnx_reader::PNNXReaderResult},
+    op::layer::TensorValue,
+};
 
 use super::{node::CGNode, pnnx_weight_reader};
-use std::{collections::{HashMap, HashSet}, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 pub type NodeIdx = usize;
 pub type BlobIdx = usize;
@@ -26,7 +32,6 @@ impl ComputationGraph {
         let mut input_nodes = Vec::<NodeIdx>::new();
         let mut output_nodes = Vec::<NodeIdx>::new();
         let mut consumed_by = HashMap::<BlobIdx, Vec<NodeIdx>>::new();
-
 
         for (idx, line) in param_result.lines.iter().enumerate() {
             let node = CGNode::from_line(line, &weights).unwrap();
@@ -59,15 +64,17 @@ impl ComputationGraph {
 }
 
 impl ComputationGraph {
-    pub fn compute(&self, inputs: &HashMap<BlobIdx, TensorValue>) -> Result<HashMap<NodeIdx, TensorValue>> {
+    pub fn compute(
+        &self,
+        inputs: &HashMap<BlobIdx, TensorValue>,
+    ) -> Result<HashMap<NodeIdx, TensorValue>> {
         let mut blob_store = HashMap::<BlobIdx, Option<TensorValue>>::new();
         let consumed_by = &self.consumed_by;
 
-        let mut remaining_feeding_times_counter = consumed_by.iter().map(
-            |(blob_idx, consumed_by_list)| {
-                (blob_idx, consumed_by_list.len())
-            },
-        ).collect::<HashMap<_, _>>();
+        let mut remaining_feeding_times_counter = consumed_by
+            .iter()
+            .map(|(blob_idx, consumed_by_list)| (blob_idx, consumed_by_list.len()))
+            .collect::<HashMap<_, _>>();
 
         let mut result = HashMap::<NodeIdx, TensorValue>::new();
 
@@ -115,20 +122,19 @@ impl ComputationGraph {
                         panic!("Input node should not appear in feeding_to")
                     }
                     CGNodeOp::Op(layer) => {
-                        let input_tensors = node.inputs.iter().map(
-                            |input_idx| {
-                                blob_store.get(input_idx).unwrap().clone().unwrap()
-                            },
-                        ).collect::<Vec<_>>();
+                        let input_tensors = node
+                            .inputs
+                            .iter()
+                            .map(|input_idx| blob_store.get(input_idx).unwrap().clone().unwrap())
+                            .collect::<Vec<_>>();
 
                         node.inputs.iter().for_each(|input_idx| {
-                            let remaining_feeding_times = remaining_feeding_times_counter.get_mut(input_idx).unwrap();
+                            let remaining_feeding_times =
+                                remaining_feeding_times_counter.get_mut(input_idx).unwrap();
                             *remaining_feeding_times -= 1;
                             if *remaining_feeding_times == 0 {
                                 // take and drop the reference
-                                if let Some(_) = blob_store.get(input_idx).take() {
-
-                                }
+                                if let Some(_) = blob_store.get(input_idx).take() {}
                             }
                         });
 
@@ -136,16 +142,16 @@ impl ComputationGraph {
                         for i in 0..node.outputs.len() {
                             let output_idx = node.outputs[i];
                             blob_store.insert(output_idx, Some(output_tensors[i].clone()));
-                            feeding_to.extend(
-                                consumed_by.get(&output_idx).unwrap().iter().cloned(),
-                            );
+                            feeding_to
+                                .extend(consumed_by.get(&output_idx).unwrap().iter().cloned());
                         }
                         computed.insert(node_idx);
                     }
                     CGNodeOp::Output => {
                         for i in 0..node.inputs.len() {
                             let output_idx = node.inputs[i];
-                            let output_tensor = blob_store.get(&output_idx).unwrap().clone().unwrap();
+                            let output_tensor =
+                                blob_store.get(&output_idx).unwrap().clone().unwrap();
                             result.insert(output_idx, output_tensor);
                         }
                         computed.insert(node_idx);
