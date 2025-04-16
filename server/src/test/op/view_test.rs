@@ -1,7 +1,5 @@
-use crate::op::{
-    conf::{ToLayer, ViewConf},
-    layer::TensorValue,
-};
+use crate::op::conf::{ToLayer, ViewConf};
+use crate::op::dtype::TensorValue;
 use ndarray::ArrayD;
 
 #[test]

@@ -1,10 +1,8 @@
 use approx::assert_abs_diff_eq;
 use ndarray::{ArrayD, IxDyn};
 
-use crate::op::{
-    conf::{GeLUConf, ToLayer},
-    layer::TensorValue,
-};
+use crate::op::conf::{GeLUConf, ToLayer};
+use crate::op::dtype::TensorValue;
 
 #[test]
 fn test_gelu_forward() {

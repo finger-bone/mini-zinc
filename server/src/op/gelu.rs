@@ -1,7 +1,8 @@
 use super::{
     conf::{self, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ocl::ProQue;
 
@@ -56,7 +57,7 @@ impl ToLayer for conf::GeLUConf {
         Ok(Box::new(GeLULayer {
             lconf,
             pro_que: ProQue::builder()
-                .dims(256)
+                .dims(512)
                 .src(include_str!("./gelu.cl"))
                 .build()
                 .unwrap(),

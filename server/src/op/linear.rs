@@ -1,7 +1,8 @@
 use super::{
     conf::{self, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
 use ocl::ProQue;
@@ -137,7 +138,7 @@ impl Forward for LinearLayer {
 
 impl ToLayer for conf::LinearConf {
     fn to_layer(self) -> Result<Box<dyn Forward>> {
-        let lconf = self;
+        let lconf: conf::LinearConf = self;
         Ok(Box::new(LinearLayer {
             lconf,
             pro_que: ProQue::builder()

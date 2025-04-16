@@ -1,6 +1,7 @@
 use anyhow::Result;
 
-use super::layer::{Forward, TensorValue};
+use super::{dtype::DataType, layer::Forward};
+use crate::op::dtype::TensorValue;
 
 pub struct ReLUConf {
     pub threshold: f32,
@@ -69,9 +70,8 @@ pub struct FlattenConf {
     pub end_dim: isize,
 }
 
-// Add LayerNorm configuration struct
 pub struct LayerNormConf {
-    pub normalized_shape: Vec<usize>, // e.g. [768]
+    pub normalized_shape: Vec<usize>,
     pub eps: f32,
     pub elementwise_affine: bool,
     pub weight: TensorValue,
@@ -83,6 +83,32 @@ pub struct GeLUConf {}
 pub struct TransposeConf {
     pub dim0: isize,
     pub dim1: isize,
+}
+
+pub struct ExpandConf {
+    pub shape: Vec<usize>,
+}
+
+pub struct MaskedFillConf {
+    pub value: f32,
+}
+
+// Tensor.to                Tensor.to_18             1 1 10 11 copy=False dtype=torch.bool $input=10 #10=(1,1,482,482)f32 #11=(1,1,482,482)bool
+pub struct TensorToConf {
+    pub target_dtype: DataType,
+}
+
+pub struct EmbeddingConf {
+    pub weight: TensorValue,
+}
+
+// pub struct scaled_dot_product_attention
+pub struct ScaledDotProductAttentionConf {
+    pub dropout: f32,
+    /// NOT YET IMPLEMENTED is_causal: bool
+    pub is_causal: bool,
+    pub max_seq_len: usize,
+    pub scale: Option<f32>,
 }
 
 pub trait ToLayer {

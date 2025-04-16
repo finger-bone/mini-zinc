@@ -1,7 +1,8 @@
 use super::{
     conf::{self, PoolType, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
 use ocl::ProQue;

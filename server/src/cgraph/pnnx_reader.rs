@@ -17,8 +17,9 @@ use anyhow::{Result, anyhow};
 use nom::character::complete::space1;
 use nom::character::complete::usize;
 
+use crate::op::dtype::DataType;
+
 use super::pnnx_value_parser::parse_shape_and_dtype;
-use super::pnnx_weight_reader::PNNXBinDataType;
 
 pub struct PNNXReaderResult {
     pub num_layers: usize,
@@ -43,7 +44,7 @@ impl PNNXLine {
                 return Some(&kv);
             }
         }
-        panic!("key not found")
+        return None;
     }
 
     pub fn get_tensor_key(&self, key: &str) -> String {
@@ -188,12 +189,9 @@ impl PNNXReaderResult {
 impl PNNXReaderResult {
     pub fn get_shape_and_dtype_map(
         &self,
-    ) -> (
-        HashMap<String, Vec<usize>>,
-        HashMap<String, PNNXBinDataType>,
-    ) {
+    ) -> (HashMap<String, Vec<usize>>, HashMap<String, DataType>) {
         let mut shape_map = HashMap::<String, Vec<usize>>::new();
-        let mut dtype_map = HashMap::<String, PNNXBinDataType>::new();
+        let mut dtype_map = HashMap::<String, DataType>::new();
         for line in &self.lines {
             for kv in &line.kvs {
                 match kv.kv_type {

@@ -1,7 +1,8 @@
 use super::{
     conf::{self, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 
 pub struct TransposeLayer {
@@ -19,7 +20,10 @@ impl Forward for TransposeLayer {
         let ndim = input_shape.len();
 
         // 确保输入张量至少有两个维度
-        assert!(ndim >= 2, "Input tensor must have at least 2 dimensions for transpose");
+        assert!(
+            ndim >= 2,
+            "Input tensor must have at least 2 dimensions for transpose"
+        );
 
         // 获取要交换的维度
         // 如果是负数，使用负数转正数
@@ -35,17 +39,22 @@ impl Forward for TransposeLayer {
         };
 
         // 验证维度有效性
-        assert!(dim0 < ndim && dim1 < ndim, "Transpose dimensions out of range");
+        assert!(
+            dim0 < ndim && dim1 < ndim,
+            "Transpose dimensions out of range"
+        );
 
         // 执行转置操作
         // 创建一个轴顺序数组，默认为[0,1,2,...,n-1]
         let mut axes: Vec<usize> = (0..ndim).collect();
         // 交换dim0和dim1的位置
         axes.swap(dim0, dim1);
-        
+
         // 使用permuted_axes执行转置
-        let output = input.clone().permuted_axes(axes);
-        
+        let output = input.clone().permuted_axes(axes).as_standard_layout().to_owned();
+
+        output.as_slice().unwrap();
+
         Ok(vec![TensorValue::Float32(output)])
     }
 }

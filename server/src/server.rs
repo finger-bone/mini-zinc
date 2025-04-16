@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use warp::Filter;
 
 use crate::cgraph::graph::ComputationGraph;
-use crate::op::layer::TensorValue;
+use crate::op::dtype::TensorValue;
 
 // 服务器状态结构体
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -35,17 +35,46 @@ pub struct InferenceResponse {
 pub struct TensorValueWrapper {
     pub dtype: String,
     pub shape: Vec<usize>,
-    pub data: Vec<f32>, // 简化为只支持f32类型
+    // 支持多种数据类型
+    #[serde(default)]
+    pub data_f32: Vec<f32>,
+    #[serde(default)]
+    pub data_i64: Vec<i64>,
+    #[serde(default)]
+    pub data_bf16: Vec<f32>, // bf16数据以f32形式传输，转换时处理
+    #[serde(default)]
+    pub data_f16: Vec<f32>, // f16数据以f32形式传输，转换时处理
 }
 
 impl From<TensorValueWrapper> for TensorValue {
     fn from(wrapper: TensorValueWrapper) -> Self {
         match wrapper.dtype.as_str() {
             "float32" => {
-                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data).unwrap();
+                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data_f32).unwrap();
                 TensorValue::Float32(array)
-            }
-            // 可以根据需要添加其他类型的转换
+            },
+            "int64" => {
+                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data_i64).unwrap();
+                TensorValue::Int64(array)
+            },
+            "bfloat16" => {
+                // 将f32数据转换为bf16
+                let bf16_data: Vec<half::bf16> = wrapper.data_bf16
+                    .iter()
+                    .map(|&x| half::bf16::from_f32(x))
+                    .collect();
+                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, bf16_data).unwrap();
+                TensorValue::BFloat16(array)
+            },
+            "float16" => {
+                // 将f32数据转换为f16
+                let f16_data: Vec<half::f16> = wrapper.data_f16
+                    .iter()
+                    .map(|&x| half::f16::from_f32(x))
+                    .collect();
+                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, f16_data).unwrap();
+                TensorValue::Float16(array)
+            },
             _ => panic!("Unsupported dtype: {}", wrapper.dtype),
         }
     }
@@ -60,10 +89,52 @@ impl From<TensorValue> for TensorValueWrapper {
                 TensorValueWrapper {
                     dtype: "float32".to_string(),
                     shape,
-                    data,
+                    data_f32: data,
+                    data_i64: Vec::new(),
+                    data_bf16: Vec::new(),
+                    data_f16: Vec::new(),
                 }
-            }
-            // 可以根据需要添加其他类型的转换
+            },
+            TensorValue::Int64(array) => {
+                let shape = array.shape().to_vec();
+                let (data, _) = array.into_raw_vec_and_offset();
+                TensorValueWrapper {
+                    dtype: "int64".to_string(),
+                    shape,
+                    data_f32: Vec::new(),
+                    data_i64: data,
+                    data_bf16: Vec::new(),
+                    data_f16: Vec::new(),
+                }
+            },
+            TensorValue::BFloat16(array) => {
+                let shape = array.shape().to_vec();
+                let (data, _) = array.into_raw_vec_and_offset();
+                // 将bf16数据转换为f32以便传输
+                let f32_data: Vec<f32> = data.iter().map(|&x| x.to_f32()).collect();
+                TensorValueWrapper {
+                    dtype: "bfloat16".to_string(),
+                    shape,
+                    data_f32: Vec::new(),
+                    data_i64: Vec::new(),
+                    data_bf16: f32_data,
+                    data_f16: Vec::new(),
+                }
+            },
+            TensorValue::Float16(array) => {
+                let shape = array.shape().to_vec();
+                let (data, _) = array.into_raw_vec_and_offset();
+                // 将f16数据转换为f32以便传输
+                let f32_data: Vec<f32> = data.iter().map(|&x| x.to_f32()).collect();
+                TensorValueWrapper {
+                    dtype: "float16".to_string(),
+                    shape,
+                    data_f32: Vec::new(),
+                    data_i64: Vec::new(),
+                    data_bf16: Vec::new(),
+                    data_f16: f32_data,
+                }
+            },
             _ => panic!("Unsupported TensorValue type"),
         }
     }

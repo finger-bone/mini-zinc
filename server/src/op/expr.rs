@@ -4,8 +4,10 @@ use std::str::FromStr;
 
 use super::{
     conf::{ExprConf, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+
+use crate::op::dtype::TensorValue;
 
 use nom::{
     IResult, Parser,
@@ -21,7 +23,9 @@ use nom::{
 pub enum ExprOp {
     Add,
     Mul,
+    Sub,
     Input(usize),
+    Constant(f32),
 }
 
 #[derive(Debug, Clone)]
@@ -48,6 +52,17 @@ fn input_parser(input: &str) -> IResult<&str, Expr> {
         input,
         Expr {
             op: ExprOp::Input(idx),
+            children: vec![],
+        },
+    ))
+}
+
+fn constant_parser(input: &str) -> IResult<&str, Expr> {
+    let (input, value) = map_res(nom::number::complete::recognize_float, FromStr::from_str).parse(input)?;
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Constant(value),
             children: vec![],
         },
     ))
@@ -87,9 +102,26 @@ fn mul_parser(input: &str) -> IResult<&str, Expr> {
     ))
 }
 
+fn sub_parser(input: &str) -> IResult<&str, Expr> {
+    let (input, _) = tag("sub").parse(input)?;
+    let (input, children) = delimited(
+        char('('),
+        separated_list0(char(','), expr_parser),
+        char(')'),
+    )
+    .parse(input)?;
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Sub,
+            children,
+        },
+    ))
+}
+
 // 重点：nom 8 写法，使用 `.parse(input)`
 fn expr_parser(input: &str) -> IResult<&str, Expr> {
-    alt((input_parser, add_parser, mul_parser)).parse(input)
+    alt((input_parser, constant_parser, add_parser, mul_parser, sub_parser)).parse(input)
 }
 
 // --- Layer implementation ---
@@ -110,6 +142,7 @@ impl Forward for ExprLayer {
         fn eval_expr(expr: &Expr, inputs: &Vec<ArrayD<f32>>) -> ArrayD<f32> {
             match &expr.op {
                 ExprOp::Input(idx) => inputs[*idx].clone(),
+                ExprOp::Constant(value) => ArrayD::from_elem(inputs[0].shape(), *value),
                 ExprOp::Add => {
                     let mut result = eval_expr(&expr.children[0], inputs);
                     for child in &expr.children[1..] {
@@ -121,6 +154,13 @@ impl Forward for ExprLayer {
                     let mut result = eval_expr(&expr.children[0], inputs);
                     for child in &expr.children[1..] {
                         result *= &eval_expr(child, inputs);
+                    }
+                    result
+                }
+                ExprOp::Sub => {
+                    let mut result = eval_expr(&expr.children[0], inputs);
+                    for child in &expr.children[1..] {
+                        result -= &eval_expr(child, inputs);
                     }
                     result
                 }

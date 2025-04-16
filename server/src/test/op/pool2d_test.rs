@@ -1,9 +1,7 @@
 use ndarray::ArrayD;
 
-use crate::op::{
-    conf::{Pool2dConf, PoolType, ToLayer},
-    layer::TensorValue,
-};
+use crate::op::conf::{Pool2dConf, PoolType, ToLayer};
+use crate::op::dtype::TensorValue;
 
 #[test]
 fn test_maxpool_forward() {

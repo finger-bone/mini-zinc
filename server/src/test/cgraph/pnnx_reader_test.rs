@@ -1,7 +1,5 @@
-use crate::cgraph::{
-    pnnx_reader::{PNNXKVType, PNNXReaderResult},
-    pnnx_weight_reader::PNNXBinDataType,
-};
+use crate::cgraph::pnnx_reader::{PNNXKVType, PNNXReaderResult};
+use crate::op::dtype::DataType;
 use anyhow::Result;
 use std::collections::HashMap;
 
@@ -88,9 +86,9 @@ ReLU ReLU_0 1 1 1 1 @output=(1,64,224,224)f32"#;
 
     assert_eq!(shape_map, expected_shape_map);
 
-    let expected_dtype_map: HashMap<String, PNNXBinDataType> = [
-        ("Conv2d_0.weight".to_string(), PNNXBinDataType::Float32),
-        ("ReLU_0.output".to_string(), PNNXBinDataType::Float32),
+    let expected_dtype_map: HashMap<String, DataType> = [
+        ("Conv2d_0.weight".to_string(), DataType::Float32),
+        ("ReLU_0.output".to_string(), DataType::Float32),
     ]
     .into_iter()
     .collect();

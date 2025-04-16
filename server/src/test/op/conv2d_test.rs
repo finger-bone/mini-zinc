@@ -1,9 +1,7 @@
 use ndarray::ArrayD;
 
-use crate::op::{
-    conf::{Conv2dConf, ToLayer},
-    layer::TensorValue,
-};
+use crate::op::conf::{Conv2dConf, ToLayer};
+use crate::op::dtype::TensorValue;
 
 #[test]
 fn test_conv_forward() {

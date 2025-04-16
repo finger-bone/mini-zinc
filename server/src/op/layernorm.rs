@@ -1,7 +1,8 @@
 use super::{
     conf::{LayerNormConf, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+use crate::op::dtype::TensorValue;
 use anyhow::{Result, anyhow};
 use ndarray::ArrayD;
 use ocl::ProQue;
@@ -9,107 +10,107 @@ use ocl::ProQue;
 pub struct LayerNormLayer {
     pub lconf: LayerNormConf,
     pub pro_que: ProQue,
-    pub gamma: ocl::Buffer<f32>,
-    pub beta: ocl::Buffer<f32>,
 }
 
 impl Forward for LayerNormLayer {
     fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
-        let TensorValue::Float32(input_arr) = &input[0] else {
-            return Err(anyhow!("Expected Float32 input for LayerNorm"));
+        let TensorValue::Float32(input) = &input[0] else {
+            return Err(anyhow!("Unsupported input type for LayerNorm"));
         };
+        let input_shape = input.shape();
+        let batch_size = input_shape[0];
+        let feature_size: usize = input_shape[1..].iter().product(); // Flatten features
 
-        let input_shape = input_arr.shape();
-        assert_eq!(
-            input_shape.len(),
-            3,
-            "LayerNorm only supports 3D input: [batch, seq_len, embed_dim]"
-        );
-
-        let (batch_size, seq_len, embed_dim) = (input_shape[0], input_shape[1], input_shape[2]);
-        let total_samples = batch_size * seq_len;
-
-        let input_flat = input_arr
-            .as_slice()
-            .ok_or_else(|| anyhow!("Failed to get input slice"))?;
-
-        let input_buffer = self
-            .pro_que
-            .buffer_builder()
-            .len(input_flat.len())
-            .copy_host_slice(input_flat)
-            .build()?;
-
+        // Create output buffer
+        let output_size = input.len();
         let output_buffer = self
             .pro_que
-            .buffer_builder()
-            .len(input_flat.len())
+            .buffer_builder::<f32>()
+            .len(output_size)
             .build()?;
 
+        // Create input buffer
+        let input_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
+            .len(input.len())
+            .copy_host_slice(input.as_slice().unwrap())
+            .build()?;
+
+        let gamma = match &self.lconf.weight {
+            TensorValue::Float32(gamma) => gamma,
+            _ => return Err(anyhow!("Unsupported type for weight.")),
+        };
+
+        // Create gamma buffer
+        let gamma_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
+            .len(gamma.len())
+            .copy_host_slice(gamma.as_slice().unwrap())
+            .build()?;
+
+        let beta = match &self.lconf.bias {
+            TensorValue::Float32(beta) => beta,
+            _ => return Err(anyhow!("Unsupported beta type for LayerNorm")),
+        };
+
+        // Create beta buffer
+        let beta_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
+            .len(beta.len())
+            .copy_host_slice(beta.as_slice().unwrap())
+            .build()?;
+
+        // Build and execute kernel
         let kernel = self
             .pro_que
             .kernel_builder("layernorm")
-            .global_work_size(input_flat.len())
+            .global_work_size(output_size) // Process each element
             .arg(&input_buffer)
             .arg(&output_buffer)
-            .arg(&self.gamma)
-            .arg(&self.beta)
-            .arg(self.lconf.eps)
-            .arg(embed_dim as i32)
-            .arg(total_samples as i32)
+            .arg(&gamma_buffer)
+            .arg(&beta_buffer)
+            .arg(batch_size as i32)
+            .arg(feature_size as i32)
+            .arg(self.lconf.eps as f32)
             .build()?;
 
         unsafe {
             kernel.enq()?;
         }
 
-        let mut output_data = vec![0f32; input_flat.len()];
-        output_buffer.read(&mut output_data).enq()?;
+        // Create output array and read from buffer
+        let mut output = ArrayD::zeros(input.raw_dim());
+        output_buffer
+            .read(output.as_slice_mut().unwrap())
+            .enq()?;
 
-        let output_arr = ArrayD::from_shape_vec(
-            ndarray::IxDyn(&[batch_size, seq_len, embed_dim]),
-            output_data,
-        )?;
-
-        Ok(vec![TensorValue::Float32(output_arr)])
+        Ok(vec![TensorValue::Float32(output)])
     }
 }
 
 impl ToLayer for LayerNormConf {
+    // fn to_layer(self) -> Result<Box<dyn Forward>> {
+    //     let lconf = self;
+    //     let pro_que = ProQue::builder()
+    //         .src(include_str!("./layernorm.cl"))
+    //         .build()?;
+
+    //     Ok(Box::new(LayerNormLayer {
+    //         lconf,
+    //         pro_que,
+    //     }))
+    // }
     fn to_layer(self) -> Result<Box<dyn Forward>> {
-        let embed_dim = self.normalized_shape[0];
-
-        let gamma_arr = match &self.weight {
-            TensorValue::Float32(arr) => arr.clone(),
-            _ => return Err(anyhow!("Gamma must be Float32")),
-        };
-        let beta_arr = match &self.bias {
-            TensorValue::Float32(arr) => arr.clone(),
-            _ => return Err(anyhow!("Beta must be Float32")),
-        };
-
-        let pro_que = ProQue::builder()
-            .dims(embed_dim)
-            .src(include_str!("layernorm.cl"))
-            .build()?;
-
-        let gamma_buf = pro_que
-            .buffer_builder()
-            .len(embed_dim)
-            .copy_host_slice(gamma_arr.as_slice().unwrap())
-            .build()?;
-
-        let beta_buf = pro_que
-            .buffer_builder()
-            .len(embed_dim)
-            .copy_host_slice(beta_arr.as_slice().unwrap())
-            .build()?;
-
         Ok(Box::new(LayerNormLayer {
             lconf: self,
-            pro_que,
-            gamma: gamma_buf,
-            beta: beta_buf,
+            pro_que: ProQue::builder()
+                .dims(512)
+                .src(include_str!("./layernorm.cl"))
+                .build()
+                .unwrap(),
         }))
     }
 }

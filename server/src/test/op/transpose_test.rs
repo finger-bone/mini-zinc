@@ -1,10 +1,8 @@
 use approx::assert_abs_diff_eq;
 use ndarray::{ArrayD, IxDyn};
 
-use crate::op::{
-    conf::{ToLayer, TransposeConf},
-    layer::TensorValue,
-};
+use crate::op::conf::{ToLayer, TransposeConf};
+use crate::op::dtype::TensorValue;
 
 #[test]
 fn test_transpose_forward() {
@@ -39,7 +37,9 @@ fn test_transpose_forward() {
     // 测试3D张量的转置
     let input = ArrayD::from_shape_vec(
         IxDyn(&[2, 3, 2]),
-        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0],
+        vec![
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0,
+        ],
     )
     .unwrap();
 

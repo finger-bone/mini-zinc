@@ -1,12 +1,13 @@
 use super::{
     conf::{self, ToLayer},
-    layer::{Forward, TensorValue},
+    layer::Forward,
 };
+use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::IxDyn;
 
 pub struct FlattenLayer {
-    pub fconf: conf::FlattenConf,
+    pub lconf: conf::FlattenConf,
 }
 
 impl Forward for FlattenLayer {
@@ -20,16 +21,16 @@ impl Forward for FlattenLayer {
         let ndim = input_shape.len();
 
         // Handle negative dimensions
-        let start_dim = if self.fconf.start_dim < 0 {
-            (ndim as isize + self.fconf.start_dim) as usize
+        let start_dim = if self.lconf.start_dim < 0 {
+            (ndim as isize + self.lconf.start_dim) as usize
         } else {
-            self.fconf.start_dim as usize
+            self.lconf.start_dim as usize
         };
 
-        let end_dim = if self.fconf.end_dim < 0 {
-            (ndim as isize + self.fconf.end_dim) as usize
+        let end_dim = if self.lconf.end_dim < 0 {
+            (ndim as isize + self.lconf.end_dim) as usize
         } else {
-            self.fconf.end_dim as usize
+            self.lconf.end_dim as usize
         };
 
         // Validate dimensions
@@ -56,7 +57,7 @@ impl Forward for FlattenLayer {
 
 impl ToLayer for conf::FlattenConf {
     fn to_layer(self) -> Result<Box<dyn Forward>> {
-        let fconf = self;
-        Ok(Box::new(FlattenLayer { fconf }))
+        let lconf = self;
+        Ok(Box::new(FlattenLayer { lconf }))
     }
 }

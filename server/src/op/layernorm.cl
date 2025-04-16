@@ -1,32 +1,35 @@
-// 补全层归一化计算逻辑
 __kernel void layernorm(
-    __global float* input,
-    __global float* output,
-    __global float* gamma,
-    __global float* beta,
-    const float eps,
-    const int embed_dim,
-    const int batch_seq // batch_size * seq_len
+    __global const float *input,
+    __global float *output,
+    __global const float *gamma,
+    __global const float *beta,
+    const int batch_size,
+    const int feature_size,
+    const float eps
 ) {
-    int gid = get_global_id(0);
-    int sample_idx = gid / embed_dim;
-    int embed_idx = gid % embed_dim;
+    int global_id = get_global_id(0);
+    int batch_idx = global_id / feature_size;
+    int feature_idx = global_id % feature_size;
 
-    // 计算当前样本的均值和方差
+    // Calculate mean and variance for the current batch element
     float mean = 0.0f;
-    for (int i = 0; i < embed_dim; i++) {
-        mean += input[sample_idx * embed_dim + i];
-    }
-    mean /= embed_dim;
+    float variance = 0.0f;
+    int offset = batch_idx * feature_size;
 
-    float var_sum = 0.0f;
-    for (int i = 0; i < embed_dim; i++) {
-        float diff = input[sample_idx * embed_dim + i] - mean;
-        var_sum += diff * diff;
+    for (int i = 0; i < feature_size; ++i) {
+        mean += input[offset + i];
     }
-    float var = rsqrt( (var_sum / embed_dim) + eps );
+    mean /= feature_size;
 
-    // 应用层归一化公式
-    float x = input[sample_idx * embed_dim + embed_idx];
-    output[gid] = (x - mean) * var * gamma[embed_idx] + beta[embed_idx];
+    for (int i = 0; i < feature_size; ++i) {
+        float diff = input[offset + i] - mean;
+        variance += diff * diff;
+    }
+    variance /= feature_size;
+
+    // Normalize
+    float normalized_val = (input[global_id] - mean) / sqrt(variance + eps);
+
+    // Scale and shift
+    output[global_id] = normalized_val * gamma[feature_idx] + beta[feature_idx];
 }

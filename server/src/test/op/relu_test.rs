@@ -1,9 +1,7 @@
 use ndarray::ArrayD;
 
-use crate::op::{
-    conf::{ReLUConf, ToLayer},
-    layer::TensorValue,
-};
+use crate::op::conf::{ReLUConf, ToLayer};
+use crate::op::dtype::TensorValue;
 
 #[test]
 fn test_relu_forward() {

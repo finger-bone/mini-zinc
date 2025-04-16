@@ -10,19 +10,26 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, Conv2dConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, Pool2dConf, PoolType, ReLUConf, TransposeConf, ViewConf
+            AdaptivePool2dConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf,
+            GeLUConf, LayerNormConf, LinearConf, MaskedFillConf, Pool2dConf, PoolType, ReLUConf,
+            ScaledDotProductAttentionConf, TensorToConf, TransposeConf, ViewConf,
         },
-        layer::{Forward, TensorValue},
+        layer::Forward,
     },
 };
 
+use crate::op::dtype::TensorValue;
+
 use crate::op::conf::ToLayer;
 
-use super::pnnx_value_parser::{parse_bool, parse_f32, parse_isize, parse_usize_tuple};
+use super::pnnx_value_parser::{
+    parse_bool, parse_dtype, parse_f32, parse_isize, parse_usize_tuple,
+};
 
 pub enum CGNodeOp {
     Input,
     Output,
+    Attribute(TensorValue),
     Op(Box<dyn Forward>),
 }
 
@@ -31,11 +38,13 @@ impl Debug for CGNodeOp {
         match self {
             CGNodeOp::Input => write!(f, "Input"),
             CGNodeOp::Output => write!(f, "Output"),
-            CGNodeOp::Op(_) => write!(f, "Op(Unknown)"),
+            CGNodeOp::Attribute(_) => write!(f, "Attribute(Value Unknown)"),
+            CGNodeOp::Op(_) => write!(f, "Op(Information Unknown)"),
         }
     }
 }
 
+#[derive(Debug)]
 pub struct CGNode {
     pub name: String,
     pub op: CGNodeOp,
@@ -50,7 +59,13 @@ impl CGNode {
     ) -> Result<Self> {
         let op = match line.op_type.as_str() {
             "pnnx.Input" => Ok(CGNodeOp::Input),
-            "pnnx.Ouput" => Ok(CGNodeOp::Output),
+            "pnnx.Ouput" => {
+                Ok(CGNodeOp::Output)
+            },
+            // pnnx.Attribute           model.distilbert.embeddings.word_embeddings 0 1 2 @data=(30522,768)f32 #2=(30522,768)f32
+            "pnnx.Attribute" => Ok(CGNodeOp::Attribute(
+                weights.get(&line.get_tensor_key("data")).unwrap().clone(),
+            )),
             "nn.ReLU" => Ok(CGNodeOp::Op(
                 ReLUConf { threshold: 0f32 }.to_layer().unwrap(),
             )),
@@ -245,17 +260,11 @@ impl CGNode {
             }
             "F.gelu" => Ok(CGNodeOp::Op(GeLUConf {}.to_layer().unwrap())),
             // Tensor.view              Tensor.view_19           1 1 13 14 shape=(1,482,12,64) $input=13 #13=(1,482,768)f32 #14=(1,482,12,64)f32
-            "Tensor.view" => {
-                let (_, output_shape) = parse_usize_tuple.parse(
-                    line.get("shape", PNNXKVType::Attr).unwrap().value.as_str(),
-                ).unwrap();
-                Ok(CGNodeOp::Op(
-                    ViewConf {
-                        output_shape,
-                    }
-                    .to_layer()
-                    .unwrap(),
-                ))
+            "Tensor.view" | "Tensor.reshape" => {
+                let (_, output_shape) = parse_usize_tuple
+                    .parse(line.get("shape", PNNXKVType::Attr).unwrap().value.as_str())
+                    .unwrap();
+                Ok(CGNodeOp::Op(ViewConf { output_shape }.to_layer().unwrap()))
             }
             // torch.transpose          torch.transpose_45       1 1 20 21 dim0=1 dim1=2 $input=20 #20=(1,482,12,64)f32 #21=(1,12,482,64)f32
             "torch.transpose" => {
@@ -265,15 +274,92 @@ impl CGNode {
                 let (_, dim1) = parse_isize
                     .parse(&line.get("dim1", PNNXKVType::Attr).unwrap().value)
                     .unwrap();
-                Ok(CGNodeOp::Op(TransposeConf {
-                    dim0,
-                    dim1,
-                }.to_layer().unwrap()))
+                Ok(CGNodeOp::Op(
+                    TransposeConf { dim0, dim1 }.to_layer().unwrap(),
+                ))
+            }
+            //Tensor.expand            Tensor.expand_16         1 1 7 8 shape=(1,1,482,482) $input=7 #7=(1,1,1,482)i64 #8=(1,1,482,482)i64
+            "Tensor.expand" => {
+                let (_, output_shape) = parse_usize_tuple
+                    .parse(line.get("shape", PNNXKVType::Attr).unwrap().value.as_str())
+                    .unwrap();
+                Ok(CGNodeOp::Op(
+                    ExpandConf {
+                        shape: output_shape,
+                    }
+                    .to_layer()
+                    .unwrap(),
+                ))
+            }
+            // Tensor.masked_fill       Tensor.masked_fill_69    2 1 10 11 12 value=-3.402823e+38 $input=10 $mask=11 #10=(1,1,482,482)f32 #11=(1,1,482,482)bool #12=(1,1,482,482)f32
+            "Tensor.masked_fill" => {
+                let (_, value) = parse_f32
+                    .parse(&line.get("value", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
+                Ok(CGNodeOp::Op(MaskedFillConf { value }.to_layer().unwrap()))
+            }
+            "Tensor.to" => {
+                // Tensor.to                Tensor.to_17             1 1 8 9 copy=False dtype=torch.float $input=8 #8=(1,1,482,482)i64 #9=(1,1,482,482)f32
+                let (_, dtype) = parse_dtype
+                    .parse(&line.get("dtype", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
+                Ok(CGNodeOp::Op(
+                    TensorToConf {
+                        target_dtype: dtype,
+                    }
+                    .to_layer()
+                    .unwrap(),
+                ))
+            }
+            // nn.Embedding             pnnx_unique_0            1 1 0 3 embedding_dim=768 num_embeddings=30522 sparse=False @weight=(30522,768)f32 #0=(1,482)i64 #3=(1,482,768)f32
+            "nn.Embedding" => {
+                let weight = weights
+                    .get(&line.get_tensor_key("weight"))
+                    .unwrap();
+                Ok(CGNodeOp::Op(
+                    EmbeddingConf {
+                        weight: weight.clone(),
+                    }
+                    .to_layer()
+                    .unwrap(),
+                ))
+            }
+            // F.scaled_dot_product_attention F.scaled_dot_product_attention_1862 4 1 87 88 89 9 90 dropout_p=0.000000e+00 is_causal=False scale=1.250000e-01 $query=87 $key=88 $value=89 $attn_mask=9 #87=(1,9,512,64)f32 #88=(1,9,512,64)f32 #89=(1,9,512,64)f32 #9=(1,1,512,512)f32 #90=(1,9,512,64)f32
+            "F.scaled_dot_product_attention" => {
+                let scale = match &line.get("scale", PNNXKVType::Attr) {
+                    Some(v) => {
+                        let (_, scale) = parse_f32.parse(v.value.as_str()).unwrap();
+                        Some(scale)
+                    }
+                    None => None,
+                };
+                let (_, is_causal) = parse_bool
+                    .parse(&line.get("is_causal", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
+
+                // let input_q_shape = &line.get("query", PNNXKVType::Input)
+                // let dropout = parse_f32
+
+                let input_q_blob = &line.get("query", PNNXKVType::Input).unwrap().value;
+                let input_q_shape = &line.get(&input_q_blob, PNNXKVType::Shape).unwrap().value;
+                let (_, input_q_shape) = parse_usize_tuple.parse(input_q_shape.as_str()).unwrap();
+                let max_seq_len = input_q_shape[1];
+
+                Ok(CGNodeOp::Op(
+                    ScaledDotProductAttentionConf {
+                        scale,
+                        dropout: 0.0,
+                        is_causal,
+                        max_seq_len,
+                    }
+                    .to_layer()
+                    .unwrap(),
+                ))
             }
             any => Err(anyhow!("Unsupported operator type {}", any)),
         }
         .unwrap();
-
+        eprintln!("{}", line.op_name);
         let node = CGNode {
             name: line.op_name.clone(),
             op,

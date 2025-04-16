@@ -1,5 +1,6 @@
-use crate::cgraph::pnnx_weight_reader::{PNNXBinDataType, load_pnnx_zip_bin};
-use crate::op::layer::TensorValue;
+use crate::cgraph::pnnx_weight_reader::load_pnnx_zip_bin;
+use crate::op::dtype::DataType;
+use crate::op::dtype::TensorValue;
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::collections::HashMap;
 use std::fs::File;
@@ -46,8 +47,8 @@ fn test_load_pnnx_zip_bin_multiple_weights() {
     shape_map.insert("weight1".to_string(), vec![2, 2]);
     shape_map.insert("weight2".to_string(), vec![2, 3]);
     let mut data_type_map = HashMap::new();
-    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
-    data_type_map.insert("weight2".to_string(), PNNXBinDataType::Float32);
+    data_type_map.insert("weight1".to_string(), DataType::Float32);
+    data_type_map.insert("weight2".to_string(), DataType::Float32);
 
     // 加载并验证结果
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map).unwrap();
@@ -100,7 +101,7 @@ fn test_load_pnnx_zip_bin_compressed() {
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![2, 2]);
     let mut data_type_map = HashMap::new();
-    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
+    data_type_map.insert("weight1".to_string(), DataType::Float32);
 
     // 加载并验证结果
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map).unwrap();
@@ -142,7 +143,7 @@ fn test_load_pnnx_zip_bin_shape_mismatch() {
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![3, 3]);
     let mut data_type_map = HashMap::new();
-    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
+    data_type_map.insert("weight1".to_string(), DataType::Float32);
 
     // 加载并验证结果应该失败
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map);
@@ -176,7 +177,7 @@ fn test_load_pnnx_zip_bin() {
     let mut shape_map = HashMap::new();
     shape_map.insert("weight1".to_string(), vec![2, 2]);
     let mut data_type_map = HashMap::new();
-    data_type_map.insert("weight1".to_string(), PNNXBinDataType::Float32);
+    data_type_map.insert("weight1".to_string(), DataType::Float32);
 
     // 加载并验证结果
     let result = load_pnnx_zip_bin(zip_path.to_str().unwrap(), &shape_map, &data_type_map).unwrap();
