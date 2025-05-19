@@ -67,7 +67,9 @@ if image:
             st.write("前5预测结果：")
             st.table({
                 "Label": top5_labels,
-                "Probability": f"{np.round(top5_probs * 100, 2)}%"
+                "Probability": [
+                    f"{e}%" for e in np.round(top5_probs * 100, 2)
+                ]
             })
         
         # 新增推理耗时显示
