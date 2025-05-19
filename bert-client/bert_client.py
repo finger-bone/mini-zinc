@@ -5,7 +5,7 @@ import torch
 
 tokenizer = AutoTokenizer.from_pretrained("../server/export/bert/distilbert-base-uncased")
 
-text = "The capital of France is [MASK]."
+text = "The capital of China is [MASK]."
 tokenized_input = tokenizer(text, return_tensors="pt", padding="max_length", max_length=32)
 
 input_ids = tokenized_input["input_ids"]
