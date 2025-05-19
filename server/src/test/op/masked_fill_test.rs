@@ -20,6 +20,7 @@ fn test_masked_fill_all_true() {
         .unwrap();
 
     if let TensorValue::Float32(result) = &output[0] {
+        assert_eq!(result.shape(), &[3]);
         assert_eq!(result.as_slice().unwrap(), &[5.0, 5.0, 5.0]);
     } else {
         panic!("Unexpected tensor type");
@@ -42,6 +43,7 @@ fn test_masked_fill_all_false() {
         .unwrap();
 
     if let TensorValue::Float32(result) = &output[0] {
+        assert_eq!(result.shape(), &[4]);
         assert_eq!(result, &data);
     } else {
         panic!("Unexpected tensor type");
@@ -66,6 +68,7 @@ fn test_masked_fill_2d() {
         .unwrap();
 
     if let TensorValue::Float32(result) = &output[0] {
+        assert_eq!(result.shape(), &[2, 2]);
         assert_eq!(*result, expected);
     } else {
         panic!("Unexpected tensor type");

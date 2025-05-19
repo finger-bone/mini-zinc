@@ -10,9 +10,7 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf,
-            GeLUConf, LayerNormConf, LinearConf, MaskedFillConf, Pool2dConf, PoolType, ReLUConf,
-            ScaledDotProductAttentionConf, TensorToConf, TransposeConf, ViewConf,
+            AdaptivePool2dConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf, MaskedFillConf, Pool2dConf, PoolType, ReLUConf, ScaledDotProductAttentionConf, TensorToConf, TransposeConf, ViewConf
         },
         layer::Forward,
     },
@@ -207,16 +205,29 @@ impl CGNode {
                 let (_, out_features) = parse_usize
                     .parse(&line.get("out_features", PNNXKVType::Attr).unwrap().value)
                     .unwrap();
-                Ok(CGNodeOp::Op(
-                    LinearConf {
-                        in_features,
-                        out_features,
-                        weights: weights.get(&line.get_tensor_key("weight")).unwrap().clone(),
-                        bias: weights.get(&line.get_tensor_key("bias")).unwrap().clone(),
-                    }
-                    .to_layer()
-                    .unwrap(),
-                ))
+                if line.input_idx_list.len() == 1 {
+                    Ok(CGNodeOp::Op(
+                        LinearConf {
+                            in_features,
+                            out_features,
+                            weights: weights.get(&line.get_tensor_key("weight")).unwrap().clone(),
+                            bias: weights.get(&line.get_tensor_key("bias")).unwrap().clone(),
+                        }
+                        .to_layer()
+                        .unwrap(),
+                    ))
+                } else {
+                    Ok(CGNodeOp::Op(
+                        LinearWithWeightsInputConf {
+                            in_features,
+                            out_features,
+                            bias: weights.get(&line.get_tensor_key("bias")).unwrap().clone(),
+                            weights: weights.get(&line.get_tensor_key("weight")).unwrap().clone(),
+                        }
+                        .to_layer()
+                        .unwrap(),
+                    ))
+                }
             }
             "pnnx.Output" => Ok(CGNodeOp::Output),
             // nn.LayerNorm             model.distilbert.transformer.layer.4.output_layer_norm 1 1 111 112 elementwise_affine=True eps=1.000000e-12 normalized_shape=(768) @bias=(768)f32 @weight=(768)f32 #111=(1,482,768)f32 #112=(1,482,768)f32

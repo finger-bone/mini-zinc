@@ -41,7 +41,7 @@ if image:
             "0": {
                 "dtype": "float32",
                 "shape": tensor.shape,
-                "data": tensor.flatten().tolist()
+                "data_f32": tensor.flatten().tolist()
             }
         }
     }
@@ -56,7 +56,7 @@ if image:
         st.subheader("推理结果")
         outputs = result["outputs"]
         if outputs:
-            output_data = np.array(outputs["49"]["data"], dtype=np.float32)
+            output_data = np.array(outputs["49"]["data_f32"], dtype=np.float32)
             probabilities = np.exp(output_data) / np.sum(np.exp(output_data))  # 手动计算softmax
             
             # 新增：显示所有概率和标签
@@ -67,7 +67,7 @@ if image:
             st.write("前5预测结果：")
             st.table({
                 "Label": top5_labels,
-                "Probability": np.round(top5_probs * 100, 2)
+                "Probability": f"{np.round(top5_probs * 100, 2)}%"
             })
         
         # 新增推理耗时显示

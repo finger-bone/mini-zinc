@@ -18,8 +18,6 @@ impl Forward for LayerNormLayer {
             return Err(anyhow!("Unsupported input type for LayerNorm"));
         };
         let input_shape = input.shape();
-        let batch_size = input_shape[0];
-        let feature_size: usize = input_shape[1..].iter().product(); // Flatten features
 
         // Create output buffer
         let output_size = input.len();
@@ -63,6 +61,9 @@ impl Forward for LayerNormLayer {
             .copy_host_slice(beta.as_slice().unwrap())
             .build()?;
 
+        let batch = input_shape[0] as i32;
+        let inner = input_shape[1..input_shape.len()-1].iter().product::<usize>() as i32;
+        let channel = input_shape[input_shape.len()-1] as i32;
         // Build and execute kernel
         let kernel = self
             .pro_que
@@ -72,8 +73,9 @@ impl Forward for LayerNormLayer {
             .arg(&output_buffer)
             .arg(&gamma_buffer)
             .arg(&beta_buffer)
-            .arg(batch_size as i32)
-            .arg(feature_size as i32)
+            .arg(batch)
+            .arg(inner)
+            .arg(channel)
             .arg(self.lconf.eps as f32)
             .build()?;
 

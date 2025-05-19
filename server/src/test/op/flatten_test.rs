@@ -19,6 +19,7 @@ fn test_flatten_forward() {
     let expected =
         ArrayD::from_shape_vec(vec![2, 12], (1..=24).map(|x| x as f32).collect()).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 12]);
         assert_eq!(output, expected);
     } else {
         panic!("Output is not Float32");
@@ -42,6 +43,7 @@ fn test_flatten_with_negative_dims() {
     let expected =
         ArrayD::from_shape_vec(vec![2, 12], (1..=24).map(|x| x as f32).collect()).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 12]);
         assert_eq!(output, expected);
     } else {
         panic!("Output is not Float32");

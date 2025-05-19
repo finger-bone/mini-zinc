@@ -56,6 +56,13 @@ pub struct LinearConf {
     pub bias: TensorValue,
 }
 
+pub struct LinearWithWeightsInputConf {
+    pub in_features: usize,
+    pub out_features: usize,
+    pub weights: TensorValue,
+    pub bias: TensorValue,
+}
+
 pub struct ViewConf {
     pub output_shape: Vec<usize>,
 }

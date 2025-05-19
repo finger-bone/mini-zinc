@@ -15,6 +15,7 @@ fn test_relu_forward() {
         .unwrap();
     // assert_eq!(output[0], input);
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 2]);
         assert_eq!(output, input);
     } else {
         panic!("Expected Float32 output");
@@ -26,6 +27,7 @@ fn test_relu_forward() {
         .forward(&vec![TensorValue::Float32(input.clone())])
         .unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 2]);
         assert_eq!(
             output,
             ArrayD::from_shape_vec(vec![2, 2], vec![0.0, 0.0, 0.0, 1.0]).unwrap()
@@ -43,6 +45,7 @@ fn test_relu_forward() {
         .unwrap();
     let expected = ArrayD::from_shape_vec(vec![2, 2], vec![0.0, 0.0, 3.0, 4.0]).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 2]);
         assert_eq!(output, expected);
     } else {
         panic!("Expected Float32 output");

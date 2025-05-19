@@ -14,3 +14,4 @@ pub mod scaled_dot_product_attention_test;
 pub mod tensor_to_test;
 pub mod transpose_test;
 pub mod view_test;
+pub mod layernorm_test;

@@ -7,6 +7,6 @@ __kernel void masked_fill(
 ) {
     size_t idx = get_global_id(0);
     if (idx < size) {
-        output[idx] = mask[idx] ? value : input[idx];
+        output[idx] = mask[idx] <= 0.1f ? input[idx] : value;
     }
 }

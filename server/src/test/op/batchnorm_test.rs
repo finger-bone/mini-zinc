@@ -17,6 +17,7 @@ fn test_batchnorm_forward() {
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[2, 3]);
         // 验证标准化后的均值接近0，方差接近1
         for c in 0..3 {
             let mean: f32 = output.index_axis(ndarray::Axis(1), c).iter().sum::<f32>() / 2.0;

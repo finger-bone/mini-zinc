@@ -16,6 +16,7 @@ fn test_float32_to_int64() {
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Int64(output_arr) = &output[0] {
+        assert_eq!(output_arr.shape(), &[3]);
         assert_eq!(output_arr.as_slice().unwrap(), &[1, -2, 4]);
     } else {
         panic!("Expected Int64 tensor");
@@ -36,6 +37,7 @@ fn test_float32_to_boolean() {
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Boolean(output_arr) = &output[0] {
+        assert_eq!(output_arr.shape(), &[4]);
         assert_eq!(output_arr.as_slice().unwrap(), &[false, true, false, true]);
     } else {
         panic!("Expected Boolean tensor");
@@ -54,6 +56,7 @@ fn test_float32_to_float16() {
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Float16(output_arr) = &output[0] {
+        assert_eq!(output_arr.shape(), &[2]);
         // 浮点精度允许误差
         let converted_back: Vec<f32> = output_arr.iter().map(|&x| x.to_f32()).collect();
         assert!((converted_back[0] - 0.123456).abs() < 0.01);

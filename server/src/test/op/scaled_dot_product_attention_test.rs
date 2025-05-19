@@ -76,11 +76,21 @@ fn test_scaled_dot_product_attention() {
         for &value in output_slice {
             assert!(!value.is_nan() && !value.is_infinite());
         }
+        
+        let expected = vec![
+            0.5529808, 0.6529808, 0.7529808, 0.85298085,
+            0.6327625, 0.7327625, 0.83276254, 0.93276256,
+            0.70113313, 0.80113316, 0.9011331, 1.0011332,
+            0.5529808, 0.6529808, 0.7529808, 0.85298085,
+            0.6327625, 0.7327625, 0.83276254, 0.93276256,
+            0.70113313, 0.80113316, 0.9011331, 1.0011332,
+        ];
 
-        // 可以添加更多具体的验证，例如验证某些已知的值
-        // 这里我们假设已经手动计算了第一个头的第一个位置的输出应该接近某个值
-        // 注意：实际值需要根据具体实现计算得出
-        // assert_relative_eq!(output_slice[0], expected_value, epsilon = 1e-5);
+        for (i, &v) in output_slice.iter().enumerate() {
+            assert!(
+                (v - expected[i]).abs() < 1e-5, "Mismatch at index {}: {} vs {}", i, v, expected[i]
+            );
+        }
     } else {
         panic!("Expected Float32 tensor");
     }

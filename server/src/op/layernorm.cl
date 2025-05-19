@@ -4,32 +4,32 @@ __kernel void layernorm(
     __global const float *gamma,
     __global const float *beta,
     const int batch_size,
-    const int feature_size,
+    const int inner_dim,    // H*W 或者 seq_len
+    const int channel_size, // 例如 embed_dim
     const float eps
 ) {
-    int global_id = get_global_id(0);
-    int batch_idx = global_id / feature_size;
-    int feature_idx = global_id % feature_size;
+    int gid = get_global_id(0);
 
-    // Calculate mean and variance for the current batch element
-    float mean = 0.0f;
-    float variance = 0.0f;
-    int offset = batch_idx * feature_size;
+    int sample_and_spatial = gid / channel_size;
+    int feature_idx = gid % channel_size;
 
-    for (int i = 0; i < feature_size; ++i) {
-        mean += input[offset + i];
+    int sample_idx  = sample_and_spatial / inner_dim;
+    int spatial_idx = sample_and_spatial % inner_dim;
+
+    // 计算 mean/variance 只在 channel_size 范围内
+    int base = (sample_and_spatial)*channel_size;
+    float mean = 0.f, var = 0.f;
+    for (int c = 0; c < channel_size; ++c) {
+        float v = input[base + c];
+        mean += v;
     }
-    mean /= feature_size;
-
-    for (int i = 0; i < feature_size; ++i) {
-        float diff = input[offset + i] - mean;
-        variance += diff * diff;
+    mean /= channel_size;
+    for (int c = 0; c < channel_size; ++c) {
+        float diff = input[base + c] - mean;
+        var += diff * diff;
     }
-    variance /= feature_size;
+    var /= channel_size;
 
-    // Normalize
-    float normalized_val = (input[global_id] - mean) / sqrt(variance + eps);
-
-    // Scale and shift
-    output[global_id] = normalized_val * gamma[feature_idx] + beta[feature_idx];
+    float normalized = (input[gid] - mean) / sqrt(var + eps);
+    output[gid] = normalized * gamma[feature_idx] + beta[feature_idx];
 }

@@ -216,11 +216,11 @@ impl ComputationGraph {
         computed: &mut HashSet<NodeIdx>,
         pending_dependencies: &mut HashMap<NodeIdx, usize>,
     ) -> Result<()> {
-        let mut iteration = 0;
+        // let mut iteration = 0;
         while !ready_nodes.is_empty() {
-            iteration += 1;
+            // iteration += 1;
             let node_idx = ready_nodes.remove(0);
-            
+
             // 跳过已计算的节点
             if computed.contains(&node_idx) {
                 continue;
@@ -240,7 +240,10 @@ impl ComputationGraph {
                             blob_store.get(input_idx).unwrap().clone().unwrap()
                         })
                         .collect::<Vec<_>>();
-
+                    // println!("node {}", node.name);
+                    // for (k, v) in input_tensors.iter().enumerate() {
+                    //     println!("input_tensors[{}]: {:?}", k, v);
+                    // }
                     // 更新引用计数并释放不再需要的内存
                     for &input_idx in &node.inputs {
                         if let Some(counter) = remaining_feeding_times_counter.get_mut(&input_idx) {
@@ -258,7 +261,6 @@ impl ComputationGraph {
                     for i in 0..node.outputs.len() {
                         let output_idx = node.outputs[i];
                         blob_store.insert(output_idx, Some(output_tensors[i].clone()));
-                        
                         // 更新依赖于此输出的节点
                         if let Some(consumers) = self.consumed_by.get(&output_idx) {
                             for &consumer in consumers {
@@ -271,6 +273,9 @@ impl ComputationGraph {
                             }
                         }
                     }
+                    // for (k, v) in output_tensors.iter().enumerate() {
+                    //     println!("output_tensors[{}]: {:?}", k, v);
+                    // }
                 }
                 CGNodeOp::Output => {
                     // 收集输出节点的结果

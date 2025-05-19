@@ -1,0 +1,1 @@
+pnnx test_bert.pt inputshape="[1,4]i64,[1,4]i64" pnnxparam=test_bert.pnnx.param pnnxbin=test_bert.pnnx.bin

@@ -16,11 +16,6 @@ pub struct ScaledDotProductAttention {
 
 impl ScaledDotProductAttention {
     pub fn new(conf: ScaledDotProductAttentionConf) -> Self {
-        // let cl_source = format!(
-        //     "#define MAX_SEQ_LEN {}\n{}",
-        //     conf.max_seq_len,
-        //     include_str!("./scaled_dot_product_attention.cl")
-        // );
         let cl_source = include_str!("./scaled_dot_product_attention.cl");
         Self {
             conf,
@@ -51,12 +46,22 @@ impl Forward for ScaledDotProductAttention {
             ));
         };
 
-        let TensorValue::Float32(mask) = &input[3] else {
-            return Err(anyhow::anyhow!(
-                "Unsupported input type for mask in ScaledDotProductAttention"
-            ));
+        let has_mask = if input.len() == 4 {
+            true
+        } else {
+            false
         };
-
+        let mask = if has_mask {
+            let TensorValue::Float32(mask) = &input[3] else {
+                return Err(anyhow::anyhow!(
+                    "Unsupported input type for mask in ScaledDotProductAttention"
+                ));
+            };
+            Some(mask)
+        }  else {
+            None
+        };
+        
         // 获取维度信息 [batch, heads, seq_len, embed_dim]
         let q_shape = q.shape();
         if q_shape.len() != 4 {
@@ -78,12 +83,6 @@ impl Forward for ScaledDotProductAttention {
             ));
         }
 
-        let mask_shape = mask.shape();
-        if mask_shape.len() != 4 {
-            return Err(anyhow::anyhow!(
-                "mask should have 4 dimensions [batch, heads, seq_len, seq_len]"
-            ));
-        }
         let batch = q_shape[0];
         let heads = q_shape[1];
         let seq_len = q_shape[2];
@@ -113,13 +112,24 @@ impl Forward for ScaledDotProductAttention {
             .copy_host_slice(v.as_slice().unwrap())
             .build()
             .unwrap();
-        let mask_buffer = self
+        let mask_buffer = if has_mask {
+            // eprintln!("mask_shape: {:?}", mask.unwrap().shape());
+            // eprintln!("mask: {:?}", mask.unwrap().as_slice().unwrap());
+            self
             .pro_que
             .buffer_builder::<f32>()
-            .len(mask.len())
-            .copy_host_slice(mask.as_slice().unwrap())
+            .len(mask.unwrap().len())
+            .copy_host_slice(mask.unwrap().as_slice().unwrap())
             .build()
-            .unwrap();
+            .unwrap()
+        } else {
+            self
+            .pro_que
+            .buffer_builder::<f32>()
+            .len(v.len())
+            .build()
+            .unwrap()
+        };
         // 创建临时缓冲区用于存储logits
         let temp_buffer = self
             .pro_que
@@ -138,6 +148,7 @@ impl Forward for ScaledDotProductAttention {
         let kernel = self
             .pro_que
             .kernel_builder("scaled_dot_product_attention")
+            .global_work_size(batch * heads * seq_len)
             .arg(&q_buffer)
             .arg(&k_buffer)
             .arg(&v_buffer)
@@ -150,6 +161,7 @@ impl Forward for ScaledDotProductAttention {
             .arg(embed_dim as i32)
             .arg(self.conf.dropout as f32)
             .arg(self.conf.scale.unwrap_or(1.0 / (embed_dim as f32).sqrt()) as f32)
+            .arg(has_mask as i32)
             .build()
             .unwrap();
         // 执行OpenCL内核

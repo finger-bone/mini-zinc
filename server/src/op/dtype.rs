@@ -18,3 +18,15 @@ pub enum TensorValue {
     Boolean(ArrayD<bool>),
     Int64(ArrayD<i64>),
 }
+
+impl TensorValue {
+    pub fn shape(&self) -> Vec<usize> {
+        match self {
+            TensorValue::BFloat16(arr) => arr.shape().to_vec(),
+            TensorValue::Float16(arr) => arr.shape().to_vec(),
+            TensorValue::Float32(arr) => arr.shape().to_vec(),
+            TensorValue::Boolean(arr) => arr.shape().to_vec(),
+            TensorValue::Int64(arr) => arr.shape().to_vec(),
+        }
+    }
+}

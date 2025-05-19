@@ -4,13 +4,14 @@ __kernel void scaled_dot_product_attention(
     __global float* v,
     __global float* mask,
     __global float* output,
-    __global float* temp_buffer,  // 临时缓冲区用于存储logits
+    __global float* temp_buffer, // 临时缓冲区用于存储logits
     int batch,
     int heads,
     int seq_len,
     int embed_dim,
     float dropout,
-    float scale
+    float scale,
+    int has_mask
 ) {
     int global_id = get_global_id(0);
     int total = batch * heads * seq_len;
@@ -36,11 +37,16 @@ __kernel void scaled_dot_product_attention(
         }
         dot *= scale;
 
-        // 加mask（注意：mask 应为 0 表示可用，-inf 表示不可用）
-        int mask_offset = ((b * heads + h) * seq_len + i) * seq_len + j;
-        // 应用mask，使用-INFINITY代替-inf
-        float mask_val = mask[mask_offset];
-        dot = (mask_val == 0.0f) ? dot : -INFINITY;
+        // 加mask
+        if (has_mask) {
+            // int mask_offset = ((b * heads + h) * seq_len + i) * seq_len + j;
+            // int mask_offset = b * seq_len + i;
+            int mask_offset = (b * seq_len + i) * seq_len + j;
+            // if (mask[mask_offset] == 1.0f) {
+            //     dot = -FLT_MAX;
+            // }
+            dot += mask[mask_offset];
+        }
 
         temp_buffer[logits_offset + j] = dot;
         if (dot > max_logit) max_logit = dot;

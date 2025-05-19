@@ -74,6 +74,7 @@ fn test_expr_layer_forward() -> Result<()> {
     ];
     let output = layer.forward(&inputs).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[3]);
         assert_eq!(output, Array1::from_vec(vec![5.0, 7.0, 9.0]).into_dyn());
     } else {
         panic!("Unexpected output type");
@@ -85,6 +86,7 @@ fn test_expr_layer_forward() -> Result<()> {
     };
     let output = layer.forward(&inputs).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[3]);
         assert_eq!(output, Array1::from_vec(vec![4.0, 10.0, 18.0]).into_dyn());
     } else {
         panic!("Unexpected output type");
@@ -96,6 +98,7 @@ fn test_expr_layer_forward() -> Result<()> {
     };
     let output = layer.forward(&inputs).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[3]);
         assert_eq!(output, Array1::from_vec(vec![-3.0, -3.0, -3.0]).into_dyn());
     } else {
         panic!("Unexpected output type");
@@ -107,6 +110,7 @@ fn test_expr_layer_forward() -> Result<()> {
     };
     let output = layer.forward(&inputs).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[3]);
         assert_eq!(output, Array1::from_vec(vec![0.0, -1.0, -2.0]).into_dyn());
     } else {
         panic!("Unexpected output type");
@@ -118,6 +122,7 @@ fn test_expr_layer_forward() -> Result<()> {
     };
     let output = layer.forward(&inputs).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
+        assert_eq!(output.shape(), &[3]);
         assert_eq!(output, Array1::from_vec(vec![9.0, 17.0, 27.0]).into_dyn());
     } else {
         panic!("Unexpected output type");

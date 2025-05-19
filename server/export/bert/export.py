@@ -8,18 +8,27 @@ model = AutoModelForMaskedLM.from_pretrained(model_id)
 model.eval()
 
 # 包装器，只返回 logits（每个 token 的预测分布）
+
 class Wrapper(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
         self.model = model
 
     def forward(self, input_ids, attention_mask):
-        return self.model(input_ids=input_ids, attention_mask=attention_mask).logits
+        # 开启输出所有 hidden states
+        outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True  # 关键参数
+        )
+        # 获取所有层的 hidden states（列表）
+        # hidden_states = outputs.hidden_states
+        # return hidden_states[1]
+        return outputs.logits
 
 # 构造 dummy 输入（带 [MASK]）
-text = "This is dummy a sentence. The capital of France is <mask>." * 32
-dummy_input = tokenizer(text, return_tensors="pt")
-
+text = "The capital of France is <mask>."
+dummy_input = tokenizer(text, return_tensors="pt", padding="max_length", max_length=32)
 input_ids = dummy_input["input_ids"]
 print(len([tokenizer.decode(e) for e in input_ids[0]]))
 attention_mask = dummy_input["attention_mask"]

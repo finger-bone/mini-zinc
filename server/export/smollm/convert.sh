@@ -1,1 +1,0 @@
-pnnx SmolLM2-135M-Instruct.pt inputshape="[1,512]i64,[1,512]i64" pnnxparam=SmolLM2-135M-Instruct.pnnx.param pnnxbin=SmolLM2-135M-Instruct.pnnx.bin

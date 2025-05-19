@@ -18,3 +18,4 @@ pub mod scaled_dot_product_attention;
 pub mod tensor_to;
 pub mod transpose;
 pub mod view;
+pub mod linear_with_weights_input;

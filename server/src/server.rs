@@ -155,7 +155,7 @@ impl InferenceServer {
     }
 
     pub fn start(self, port: u16) -> Result<()> {
-        let model = self.model.clone();
+        let model: Arc<ComputationGraph> = self.model.clone();
         let status = self.status.clone();
 
         // 启动状态监控线程
