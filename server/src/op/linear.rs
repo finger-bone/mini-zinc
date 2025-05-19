@@ -143,7 +143,7 @@ impl ToLayer for conf::LinearConf {
             lconf,
             pro_que: ProQue::builder()
                 .dims(512)
-                .src(include_str!("./linear.cl"))
+                .src(format!("#define TILE_SIZE 16\n{}", include_str!("./linear.cl")))
                 .build()
                 .unwrap(),
         }))

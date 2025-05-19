@@ -217,7 +217,7 @@ impl InferenceServer {
                         let result = match infer_model.compute(&inputs) {
                             Ok(outputs) => {
                                 // 转换输出
-                                let duration = start.elapsed().as_millis(); // 计算耗时
+                                let duration = start.elapsed().as_millis();
                                 let mut response_outputs = HashMap::new();
                                 for (k, v) in outputs {
                                     response_outputs.insert(k, TensorValueWrapper::from(v));

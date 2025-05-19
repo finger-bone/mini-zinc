@@ -145,7 +145,7 @@ impl ToLayer for conf::LinearWithWeightsInputConf {
             lconf,
             pro_que: ProQue::builder()
                 .dims(512)
-                .src(include_str!("./linear.cl"))
+                .src(include_str!("./linear_naive.cl"))
                 .build()
                 .unwrap(),
         }))
