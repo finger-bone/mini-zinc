@@ -10,7 +10,10 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf, MaskedFillConf, Pool2dConf, PoolType, ReLUConf, ScaledDotProductAttentionConf, TensorToConf, TransposeConf, ViewConf
+            AdaptivePool2dConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf,
+            GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf, MaskedFillConf,
+            Pool2dConf, PoolType, ReLUConf, ScaledDotProductAttentionConf, TensorToConf,
+            TransposeConf, ViewConf,
         },
         layer::Forward,
     },
@@ -57,9 +60,7 @@ impl CGNode {
     ) -> Result<Self> {
         let op = match line.op_type.as_str() {
             "pnnx.Input" => Ok(CGNodeOp::Input),
-            "pnnx.Ouput" => {
-                Ok(CGNodeOp::Output)
-            },
+            "pnnx.Ouput" => Ok(CGNodeOp::Output),
             // pnnx.Attribute           model.distilbert.embeddings.word_embeddings 0 1 2 @data=(30522,768)f32 #2=(30522,768)f32
             "pnnx.Attribute" => Ok(CGNodeOp::Attribute(
                 weights.get(&line.get_tensor_key("data")).unwrap().clone(),
@@ -324,9 +325,7 @@ impl CGNode {
             }
             // nn.Embedding             pnnx_unique_0            1 1 0 3 embedding_dim=768 num_embeddings=30522 sparse=False @weight=(30522,768)f32 #0=(1,482)i64 #3=(1,482,768)f32
             "nn.Embedding" => {
-                let weight = weights
-                    .get(&line.get_tensor_key("weight"))
-                    .unwrap();
+                let weight = weights.get(&line.get_tensor_key("weight")).unwrap();
                 Ok(CGNodeOp::Op(
                     EmbeddingConf {
                         weight: weight.clone(),

@@ -62,8 +62,10 @@ impl Forward for LayerNormLayer {
             .build()?;
 
         let batch = input_shape[0] as i32;
-        let inner = input_shape[1..input_shape.len()-1].iter().product::<usize>() as i32;
-        let channel = input_shape[input_shape.len()-1] as i32;
+        let inner = input_shape[1..input_shape.len() - 1]
+            .iter()
+            .product::<usize>() as i32;
+        let channel = input_shape[input_shape.len() - 1] as i32;
         // Build and execute kernel
         let kernel = self
             .pro_que
@@ -85,9 +87,7 @@ impl Forward for LayerNormLayer {
 
         // Create output array and read from buffer
         let mut output = ArrayD::zeros(input.raw_dim());
-        output_buffer
-            .read(output.as_slice_mut().unwrap())
-            .enq()?;
+        output_buffer.read(output.as_slice_mut().unwrap()).enq()?;
 
         Ok(vec![TensorValue::Float32(output)])
     }

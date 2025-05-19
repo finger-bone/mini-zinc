@@ -50,31 +50,35 @@ impl From<TensorValueWrapper> for TensorValue {
     fn from(wrapper: TensorValueWrapper) -> Self {
         match wrapper.dtype.as_str() {
             "float32" => {
-                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data_f32).unwrap();
+                let array =
+                    ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data_f32).unwrap();
                 TensorValue::Float32(array)
-            },
+            }
             "int64" => {
-                let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data_i64).unwrap();
+                let array =
+                    ndarray::ArrayD::from_shape_vec(wrapper.shape, wrapper.data_i64).unwrap();
                 TensorValue::Int64(array)
-            },
+            }
             "bfloat16" => {
                 // 将f32数据转换为bf16
-                let bf16_data: Vec<half::bf16> = wrapper.data_bf16
+                let bf16_data: Vec<half::bf16> = wrapper
+                    .data_bf16
                     .iter()
                     .map(|&x| half::bf16::from_f32(x))
                     .collect();
                 let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, bf16_data).unwrap();
                 TensorValue::BFloat16(array)
-            },
+            }
             "float16" => {
                 // 将f32数据转换为f16
-                let f16_data: Vec<half::f16> = wrapper.data_f16
+                let f16_data: Vec<half::f16> = wrapper
+                    .data_f16
                     .iter()
                     .map(|&x| half::f16::from_f32(x))
                     .collect();
                 let array = ndarray::ArrayD::from_shape_vec(wrapper.shape, f16_data).unwrap();
                 TensorValue::Float16(array)
-            },
+            }
             _ => panic!("Unsupported dtype: {}", wrapper.dtype),
         }
     }
@@ -94,7 +98,7 @@ impl From<TensorValue> for TensorValueWrapper {
                     data_bf16: Vec::new(),
                     data_f16: Vec::new(),
                 }
-            },
+            }
             TensorValue::Int64(array) => {
                 let shape = array.shape().to_vec();
                 let (data, _) = array.into_raw_vec_and_offset();
@@ -106,7 +110,7 @@ impl From<TensorValue> for TensorValueWrapper {
                     data_bf16: Vec::new(),
                     data_f16: Vec::new(),
                 }
-            },
+            }
             TensorValue::BFloat16(array) => {
                 let shape = array.shape().to_vec();
                 let (data, _) = array.into_raw_vec_and_offset();
@@ -120,7 +124,7 @@ impl From<TensorValue> for TensorValueWrapper {
                     data_bf16: f32_data,
                     data_f16: Vec::new(),
                 }
-            },
+            }
             TensorValue::Float16(array) => {
                 let shape = array.shape().to_vec();
                 let (data, _) = array.into_raw_vec_and_offset();
@@ -134,7 +138,7 @@ impl From<TensorValue> for TensorValueWrapper {
                     data_bf16: Vec::new(),
                     data_f16: f32_data,
                 }
-            },
+            }
             _ => panic!("Unsupported TensorValue type"),
         }
     }

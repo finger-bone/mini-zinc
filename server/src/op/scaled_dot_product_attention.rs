@@ -26,7 +26,6 @@ impl ScaledDotProductAttention {
 
 impl Forward for ScaledDotProductAttention {
     fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
-        
         // 处理输入：Q, K, V, 可选的mask
         let TensorValue::Float32(q) = &input[0] else {
             return Err(anyhow::anyhow!(
@@ -46,11 +45,7 @@ impl Forward for ScaledDotProductAttention {
             ));
         };
 
-        let has_mask = if input.len() == 4 {
-            true
-        } else {
-            false
-        };
+        let has_mask = if input.len() == 4 { true } else { false };
         let mask = if has_mask {
             let TensorValue::Float32(mask) = &input[3] else {
                 return Err(anyhow::anyhow!(
@@ -58,10 +53,10 @@ impl Forward for ScaledDotProductAttention {
                 ));
             };
             Some(mask)
-        }  else {
+        } else {
             None
         };
-        
+
         // 获取维度信息 [batch, heads, seq_len, embed_dim]
         let q_shape = q.shape();
         if q_shape.len() != 4 {
@@ -115,20 +110,18 @@ impl Forward for ScaledDotProductAttention {
         let mask_buffer = if has_mask {
             // eprintln!("mask_shape: {:?}", mask.unwrap().shape());
             // eprintln!("mask: {:?}", mask.unwrap().as_slice().unwrap());
-            self
-            .pro_que
-            .buffer_builder::<f32>()
-            .len(mask.unwrap().len())
-            .copy_host_slice(mask.unwrap().as_slice().unwrap())
-            .build()
-            .unwrap()
+            self.pro_que
+                .buffer_builder::<f32>()
+                .len(mask.unwrap().len())
+                .copy_host_slice(mask.unwrap().as_slice().unwrap())
+                .build()
+                .unwrap()
         } else {
-            self
-            .pro_que
-            .buffer_builder::<f32>()
-            .len(v.len())
-            .build()
-            .unwrap()
+            self.pro_que
+                .buffer_builder::<f32>()
+                .len(v.len())
+                .build()
+                .unwrap()
         };
         // 创建临时缓冲区用于存储logits
         let temp_buffer = self

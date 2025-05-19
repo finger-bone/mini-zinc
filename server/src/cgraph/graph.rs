@@ -73,7 +73,6 @@ impl ComputationGraph {
         &self,
         inputs: &HashMap<BlobIdx, TensorValue>,
     ) -> Result<HashMap<NodeIdx, TensorValue>> {
-
         // 存储中间计算结果的张量
         let mut blob_store = HashMap::<BlobIdx, Option<TensorValue>>::new();
 
@@ -91,8 +90,18 @@ impl ComputationGraph {
         let mut pending_dependencies = self.initialize_dependencies();
 
         // 处理输入和属性节点
-        self.process_input_nodes(inputs, &mut blob_store, &mut pending_dependencies, &mut ready_nodes);
-        self.process_attribute_nodes(&mut blob_store, &mut result, &mut pending_dependencies, &mut ready_nodes);
+        self.process_input_nodes(
+            inputs,
+            &mut blob_store,
+            &mut pending_dependencies,
+            &mut ready_nodes,
+        );
+        self.process_attribute_nodes(
+            &mut blob_store,
+            &mut result,
+            &mut pending_dependencies,
+            &mut ready_nodes,
+        );
 
         // 主计算循环
         self.execute_computation_loop(
@@ -105,10 +114,14 @@ impl ComputationGraph {
         )?;
 
         // 找到所有的 Output 节点的输入 blob，只保留这些 blob
-        let valid_output_blobs: Vec<BlobIdx> = self.output_nodes.iter().flat_map(|node_idx| {
-            let node = &self.nodes[node_idx];
-            node.inputs.iter().cloned()
-        }).collect();
+        let valid_output_blobs: Vec<BlobIdx> = self
+            .output_nodes
+            .iter()
+            .flat_map(|node_idx| {
+                let node = &self.nodes[node_idx];
+                node.inputs.iter().cloned()
+            })
+            .collect();
         let mut filtered_result = HashMap::<NodeIdx, TensorValue>::new();
         for blob_idx in valid_output_blobs {
             if let Some(Some(tensor)) = blob_store.get(&blob_idx) {
@@ -120,18 +133,19 @@ impl ComputationGraph {
 
     /// 初始化每个blob的消费计数器
     fn initialize_feeding_counter(&self) -> HashMap<BlobIdx, usize> {
-        let counter = self.consumed_by
+        let counter = self
+            .consumed_by
             .iter()
             .map(|(blob_idx, consumed_by_list)| (*blob_idx, consumed_by_list.len()))
             .collect::<HashMap<_, _>>();
-        
+
         counter
     }
 
     /// 初始化节点依赖关系
     fn initialize_dependencies(&self) -> HashMap<NodeIdx, usize> {
         let mut dependencies = HashMap::<NodeIdx, usize>::new();
-        
+
         for (idx, node) in &self.nodes {
             if !matches!(node.op, CGNodeOp::Input | CGNodeOp::Attribute(_)) {
                 dependencies.insert(*idx, node.inputs.len());
@@ -149,13 +163,12 @@ impl ComputationGraph {
         pending_dependencies: &mut HashMap<NodeIdx, usize>,
         ready_nodes: &mut Vec<NodeIdx>,
     ) {
-        
         for input_node_idx in &self.input_nodes {
             let node = &self.nodes[input_node_idx];
 
             for node_output in &node.outputs {
                 blob_store.insert(*node_output, Some(inputs[input_node_idx].clone()));
-                
+
                 // 更新依赖于此输入的节点
                 if let Some(consumers) = self.consumed_by.get(node_output) {
                     for &consumer in consumers {
@@ -179,16 +192,14 @@ impl ComputationGraph {
         pending_dependencies: &mut HashMap<NodeIdx, usize>,
         ready_nodes: &mut Vec<NodeIdx>,
     ) {
-
         for attribute_node_idx in &self.attribute_nodes {
             let node = &self.nodes[attribute_node_idx];
             let output_blob = node.outputs.first().unwrap();
-            
-            
+
             if let CGNodeOp::Attribute(data) = &node.op {
                 result.insert(*output_blob, data.clone());
                 blob_store.insert(*output_blob, Some(data.clone()));
-                
+
                 // 更新依赖于此属性的节点
                 if let Some(consumers) = self.consumed_by.get(output_blob) {
                     for &consumer in consumers {
@@ -225,20 +236,19 @@ impl ComputationGraph {
             if computed.contains(&node_idx) {
                 continue;
             }
-            
+
             let node = &self.nodes[&node_idx];
-            
+
             match &node.op {
                 CGNodeOp::Input | CGNodeOp::Attribute(_) => {
                     panic!("Input node or attribute node should not appear in ready_nodes")
                 }
                 CGNodeOp::Op(layer) => {
                     // 收集输入张量
-                    let input_tensors = node.inputs
+                    let input_tensors = node
+                        .inputs
                         .iter()
-                        .map(|input_idx| {
-                            blob_store.get(input_idx).unwrap().clone().unwrap()
-                        })
+                        .map(|input_idx| blob_store.get(input_idx).unwrap().clone().unwrap())
                         .collect::<Vec<_>>();
                     // println!("node {}", node.name);
                     // for (k, v) in input_tensors.iter().enumerate() {
@@ -256,7 +266,7 @@ impl ComputationGraph {
 
                     // 执行前向计算
                     let output_tensors = layer.forward(&input_tensors)?;
-                    
+
                     // 存储输出并更新依赖图
                     for i in 0..node.outputs.len() {
                         let output_idx = node.outputs[i];
@@ -288,7 +298,7 @@ impl ComputationGraph {
             }
             computed.insert(node_idx);
         }
-        
+
         Ok(())
     }
 }

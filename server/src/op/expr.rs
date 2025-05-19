@@ -58,7 +58,8 @@ fn input_parser(input: &str) -> IResult<&str, Expr> {
 }
 
 fn constant_parser(input: &str) -> IResult<&str, Expr> {
-    let (input, value) = map_res(nom::number::complete::recognize_float, FromStr::from_str).parse(input)?;
+    let (input, value) =
+        map_res(nom::number::complete::recognize_float, FromStr::from_str).parse(input)?;
     Ok((
         input,
         Expr {
@@ -121,7 +122,14 @@ fn sub_parser(input: &str) -> IResult<&str, Expr> {
 
 // 重点：nom 8 写法，使用 `.parse(input)`
 fn expr_parser(input: &str) -> IResult<&str, Expr> {
-    alt((input_parser, constant_parser, add_parser, mul_parser, sub_parser)).parse(input)
+    alt((
+        input_parser,
+        constant_parser,
+        add_parser,
+        mul_parser,
+        sub_parser,
+    ))
+    .parse(input)
 }
 
 // --- Layer implementation ---

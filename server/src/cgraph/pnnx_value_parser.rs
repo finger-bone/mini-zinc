@@ -54,9 +54,9 @@ pub fn parse_f32(input: &str) -> IResult<&str, f32> {
 pub fn parse_dtype(input: &str) -> IResult<&str, DataType> {
     map_res(
         // 使用 take_while 代替 alphanumeric1 以匹配包含点的类型名称
-        take_while(|c: char| c.is_ascii_alphanumeric() || c == '.'), 
+        take_while(|c: char| c.is_ascii_alphanumeric() || c == '.'),
         |s: &str| match s {
-            "torch.float32" | "torch.float"=> Ok(DataType::Float32),
+            "torch.float32" | "torch.float" => Ok(DataType::Float32),
             "torch.float16" => Ok(DataType::Float16),
             "torch.bfloat16" => Ok(DataType::BFloat16),
             "torch.bool" => Ok(DataType::Boolean),

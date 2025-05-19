@@ -1,7 +1,7 @@
-use approx::assert_abs_diff_eq;
-use ndarray::{ArrayD, IxDyn};
 use crate::op::conf::{LayerNormConf, ToLayer};
 use crate::op::dtype::TensorValue;
+use approx::assert_abs_diff_eq;
+use ndarray::{ArrayD, IxDyn};
 
 #[test]
 fn test_layernorm_forward() {
@@ -9,14 +9,15 @@ fn test_layernorm_forward() {
     let input = ArrayD::from_shape_vec(
         IxDyn(&[2, 4]),
         vec![
-            1.0, 2.0, 3.0, 4.0,    // 第一个样本
-            5.0, 6.0, 7.0, 8.0,    // 第二个样本
+            1.0, 2.0, 3.0, 4.0, // 第一个样本
+            5.0, 6.0, 7.0, 8.0, // 第二个样本
         ],
-    ).unwrap();
+    )
+    .unwrap();
 
     // gamma 和 beta 初始化为常量（1 和 0），即标准化输出不变形
     let gamma = ArrayD::from_shape_vec(IxDyn(&[4]), vec![1.0, 1.0, 1.0, 1.0]).unwrap();
-    let beta  = ArrayD::from_shape_vec(IxDyn(&[4]), vec![0.0, 0.0, 0.0, 0.0]).unwrap();
+    let beta = ArrayD::from_shape_vec(IxDyn(&[4]), vec![0.0, 0.0, 0.0, 0.0]).unwrap();
 
     let conf = LayerNormConf {
         normalized_shape: vec![4], // 对每个样本的特征维度做归一化

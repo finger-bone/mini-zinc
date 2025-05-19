@@ -2,7 +2,7 @@ use crate::op::{
     conf::{EmbeddingConf, ToLayer},
     dtype::TensorValue,
 };
-use ndarray::{array, ArrayD};
+use ndarray::{ArrayD, array};
 
 #[test]
 fn test_embedding_forward_normal_case() {
@@ -12,13 +12,10 @@ fn test_embedding_forward_normal_case() {
             vec![4, 3],
             vec![
                 // idx 0
-                1.0, 2.0, 3.0,  
-                // idx 1
-                4.0, 5.0, 6.0,  
-                // idx 2
-                7.0, 8.0, 9.0,  
-                // idx 3
-                10.0, 11.0, 12.0,  
+                1.0, 2.0, 3.0, // idx 1
+                4.0, 5.0, 6.0, // idx 2
+                7.0, 8.0, 9.0, // idx 3
+                10.0, 11.0, 12.0,
             ],
         )
         .unwrap(),
@@ -31,13 +28,7 @@ fn test_embedding_forward_normal_case() {
     let layer = embedding.to_layer().unwrap();
 
     // 输入：每个位置是词索引
-    let indices = TensorValue::Int64(
-        ArrayD::from_shape_vec(
-            vec![1, 3],
-            vec![0i64, 2, 3],
-        )
-        .unwrap(),
-    );
+    let indices = TensorValue::Int64(ArrayD::from_shape_vec(vec![1, 3], vec![0i64, 2, 3]).unwrap());
 
     // 执行前向传播
     let output = layer.forward(&vec![indices]).unwrap();
@@ -48,13 +39,11 @@ fn test_embedding_forward_normal_case() {
         assert_eq!(output_arr.shape(), &[1, 3, 3]);
 
         // ✅ 2. 验证每个词向量是否与weight一致
-        let expected = array![
-            [
-                [1.0, 2.0, 3.0],   // index 0
-                [7.0, 8.0, 9.0],   // index 2
-                [10.0, 11.0, 12.0] // index 3
-            ]
-        ];
+        let expected = array![[
+            [1.0, 2.0, 3.0],    // index 0
+            [7.0, 8.0, 9.0],    // index 2
+            [10.0, 11.0, 12.0]  // index 3
+        ]];
 
         // ✅ 3. 遍历所有值进行精确比较
         for b in 0..1 {

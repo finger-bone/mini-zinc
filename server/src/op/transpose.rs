@@ -51,7 +51,11 @@ impl Forward for TransposeLayer {
         axes.swap(dim0, dim1);
 
         // 使用permuted_axes执行转置
-        let output = input.clone().permuted_axes(axes).as_standard_layout().to_owned();
+        let output = input
+            .clone()
+            .permuted_axes(axes)
+            .as_standard_layout()
+            .to_owned();
 
         output.as_slice().unwrap();
 
