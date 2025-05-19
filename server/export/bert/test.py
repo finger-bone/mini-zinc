@@ -26,7 +26,7 @@ class Wrapper(torch.nn.Module):
         return outputs.logits
 
 # 构造 dummy 输入（带 [MASK]）
-text = "The capital of France is [MASK]."
+text = "The capital of china is [MASK]."
 dummy_input = tokenizer(text, return_tensors="pt", padding="max_length", max_length=32)
 
 input_ids = dummy_input["input_ids"]
