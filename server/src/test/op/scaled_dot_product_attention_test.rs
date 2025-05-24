@@ -11,7 +11,7 @@ fn test_scaled_dot_product_attention() {
         max_seq_len: 64,
         scale: Some(0.5), // 自定义缩放因子
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     // 创建输入张量
     // 批次大小=1, 头数=2, 序列长度=3, 嵌入维度=4
@@ -107,7 +107,7 @@ fn test_scaled_dot_product_attention_causal() {
         max_seq_len: 64,
         scale: None, // 使用默认缩放因子
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     // 创建输入张量 (简化版本)
     let batch = 1;

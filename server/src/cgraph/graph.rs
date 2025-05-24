@@ -70,7 +70,7 @@ impl ComputationGraph {
 impl ComputationGraph {
     /// 计算图的前向计算函数，接收输入张量，返回计算结果
     pub fn compute(
-        &self,
+        &mut self,
         inputs: &HashMap<BlobIdx, TensorValue>,
     ) -> Result<HashMap<NodeIdx, TensorValue>> {
         // 存储中间计算结果的张量
@@ -219,7 +219,7 @@ impl ComputationGraph {
 
     /// 执行主计算循环
     fn execute_computation_loop(
-        &self,
+        &mut self,
         blob_store: &mut HashMap<BlobIdx, Option<TensorValue>>,
         remaining_feeding_times_counter: &mut HashMap<BlobIdx, usize>,
         result: &mut HashMap<NodeIdx, TensorValue>,
@@ -237,9 +237,9 @@ impl ComputationGraph {
                 continue;
             }
 
-            let node = &self.nodes[&node_idx];
+            let node = self.nodes.get_mut(&node_idx).unwrap();
 
-            match &node.op {
+            match &mut node.op {
                 CGNodeOp::Input | CGNodeOp::Attribute(_) => {
                     panic!("Input node or attribute node should not appear in ready_nodes")
                 }

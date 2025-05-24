@@ -65,7 +65,7 @@ fn test_expr_parse_error() {
 #[test]
 fn test_expr_layer_forward() -> Result<()> {
     // Test add operation
-    let layer = ExprLayer {
+    let mut layer = ExprLayer {
         ast: Expr::parse("add(@0,@1)")?,
     };
     let inputs = vec![
@@ -81,7 +81,7 @@ fn test_expr_layer_forward() -> Result<()> {
     }
 
     // Test mul operation
-    let layer = ExprLayer {
+    let mut layer = ExprLayer {
         ast: Expr::parse("mul(@0,@1)")?,
     };
     let output = layer.forward(&inputs).unwrap();
@@ -93,7 +93,7 @@ fn test_expr_layer_forward() -> Result<()> {
     }
 
     // Test sub operation
-    let layer = ExprLayer {
+    let mut layer = ExprLayer {
         ast: Expr::parse("sub(@0,@1)")?,
     };
     let output = layer.forward(&inputs).unwrap();
@@ -105,7 +105,7 @@ fn test_expr_layer_forward() -> Result<()> {
     }
 
     // Test constant operation
-    let layer = ExprLayer {
+    let mut layer = ExprLayer {
         ast: Expr::parse("sub(1.000000,@0)")?,
     };
     let output = layer.forward(&inputs).unwrap();
@@ -117,7 +117,7 @@ fn test_expr_layer_forward() -> Result<()> {
     }
 
     // Test complex expression
-    let layer = ExprLayer {
+    let mut layer = ExprLayer {
         ast: Expr::parse("add(mul(@0,@1),add(@0,@1))")?,
     };
     let output = layer.forward(&inputs).unwrap();

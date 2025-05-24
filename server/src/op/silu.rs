@@ -6,16 +6,15 @@ use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ocl::ProQue;
 
-pub struct GeLULayer {
-    pub lconf: conf::GeLUConf,
+pub struct SiLULayer {
+    pub lconf: conf::SiLUConf,
     pub pro_que: ProQue,
 }
 
-impl Forward for GeLULayer {
+impl Forward for SiLULayer {
     fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
-        // Only process the first element
         let TensorValue::Float32(input) = &input[0] else {
-            return Err(anyhow::anyhow!("Unsupported input type for GeLU"));
+            return Err(anyhow::anyhow!("Unsupported input type for SiLU"));
         };
         let output_buffer = self
             .pro_que
@@ -32,7 +31,7 @@ impl Forward for GeLULayer {
             .unwrap();
         let kernel = self
             .pro_que
-            .kernel_builder("gelu")
+            .kernel_builder("silu")
             .global_work_size(input.len())
             .arg(&input_buffer)
             .arg(&output_buffer)
@@ -41,7 +40,6 @@ impl Forward for GeLULayer {
         unsafe {
             kernel.enq().unwrap();
         }
-
         let mut output = ndarray::ArrayD::zeros(input.raw_dim());
         output_buffer
             .read(output.as_slice_mut().unwrap())
@@ -51,14 +49,14 @@ impl Forward for GeLULayer {
     }
 }
 
-impl ToLayer for conf::GeLUConf {
+impl ToLayer for conf::SiLUConf {
     fn to_layer(self) -> Result<Box<dyn Forward>> {
         let lconf = self;
-        Ok(Box::new(GeLULayer {
+        Ok(Box::new(SiLULayer {
             lconf,
             pro_que: ProQue::builder()
                 .dims(512)
-                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./gelu.cl")))
+                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./silu.cl")))
                 .build()
                 .unwrap(),
         }))

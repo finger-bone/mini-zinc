@@ -11,7 +11,7 @@ pub struct TensorToLayer {
 }
 
 impl Forward for TensorToLayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         let input_tensor = &input[0];
         let target_dtype = &self.lconf.target_dtype;
 

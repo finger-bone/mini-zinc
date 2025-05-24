@@ -9,7 +9,7 @@ pub struct EmbeddingLayer {
 }
 
 impl Forward for EmbeddingLayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // 获取输入张量（必须是Int64类型）
         let indices = if let TensorValue::Int64(indices_arr) = &input[0] {
             indices_arr

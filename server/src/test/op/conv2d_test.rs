@@ -31,7 +31,7 @@ fn test_conv_forward() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap()),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -72,7 +72,7 @@ fn test_conv_stride() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap()),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -110,7 +110,7 @@ fn test_conv_dilation() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![1], vec![0.1]).unwrap()),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -148,7 +148,7 @@ fn test_conv_groups() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![4], vec![0.1; 4]).unwrap()),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -186,7 +186,7 @@ fn test_conv_no_padding() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap()),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -229,7 +229,7 @@ fn test_conv2d_value() {
         bias,
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -280,7 +280,7 @@ fn test_conv_multi_channel() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![3], vec![0.0; 3]).unwrap()),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Float32(output_array) = &output[0] {
@@ -310,7 +310,7 @@ fn test_conv_all_zeros_input() {
         ),
     };
 
-    let layer = conv.to_layer().unwrap();
+    let mut layer = conv.to_layer().unwrap();
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Float32(output_array) = &output[0] {

@@ -369,7 +369,7 @@ impl CGNode {
             any => Err(anyhow!("Unsupported operator type {}", any)),
         }
         .unwrap();
-        eprintln!("{}", line.op_name);
+        // eprintln!("{}", line.op_name);
         let node = CGNode {
             name: line.op_name.clone(),
             op,

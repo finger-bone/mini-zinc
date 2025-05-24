@@ -30,7 +30,7 @@ fn test_conv2d_basic() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![1], vec![0.0]).unwrap()),
     };
 
-    let layer = conv_conf.to_layer().unwrap();
+    let mut layer = conv_conf.to_layer().unwrap();
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
     // 预期输出形状应为 [1, 1, 1, 1]（因为输入2x2 kernel 2x2 stride 1）

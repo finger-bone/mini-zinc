@@ -29,4 +29,50 @@ impl TensorValue {
             TensorValue::Int64(arr) => arr.shape().to_vec(),
         }
     }
+
+    pub fn dtype(&self) -> DataType {
+        match self {
+            TensorValue::BFloat16(_) => DataType::BFloat16,
+            TensorValue::Float16(_) => DataType::Float16,
+            TensorValue::Float32(_) => DataType::Float32,
+            TensorValue::Boolean(_) => DataType::Boolean,
+            TensorValue::Int64(_) => DataType::Int64,
+        }
+    }
+
+    pub fn as_float32(&self) -> Option<&ArrayD<f32>> {
+        if let TensorValue::Float32(arr) = self {
+            Some(arr)
+        } else {
+            None
+        }
+    }
+    pub fn as_int64(&self) -> Option<&ArrayD<i64>> {
+        if let TensorValue::Int64(arr) = self {
+            Some(arr)
+        } else {
+            None
+        }
+    }
+    pub fn as_boolean(&self) -> Option<&ArrayD<bool>> {
+        if let TensorValue::Boolean(arr) = self {
+            Some(arr)
+        } else {
+            None
+        }
+    }
+    pub fn as_bfloat16(&self) -> Option<&ArrayD<bf16>> {
+        if let TensorValue::BFloat16(arr) = self {
+            Some(arr)
+        } else {
+            None
+        }
+    }
+    pub fn as_float16(&self) -> Option<&ArrayD<f16>> {
+        if let TensorValue::Float16(arr) = self {
+            Some(arr)
+        } else {
+            None
+        }
+    }
 }

@@ -85,7 +85,17 @@ pub struct LayerNormConf {
     pub bias: TensorValue,
 }
 
+pub struct RSMNormConf {
+    pub normalized_shape: Vec<usize>,
+    pub eps: f32,
+    pub elementwise_affine: bool,
+    pub weight: TensorValue,
+    pub bias: TensorValue,
+}
+
 pub struct GeLUConf {}
+
+pub struct SiLUConf {}
 
 pub struct TransposeConf {
     pub dim0: isize,
@@ -120,4 +130,12 @@ pub struct ScaledDotProductAttentionConf {
 
 pub trait ToLayer {
     fn to_layer(self: Self) -> Result<Box<dyn Forward>>;
+}
+
+pub struct UnsqueezeConf {
+    pub axes: Vec<usize>,
+}
+
+pub struct CatConf {
+    pub dim: isize,
 }

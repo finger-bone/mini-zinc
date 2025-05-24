@@ -13,7 +13,7 @@ fn test_batchnorm_forward() {
     .unwrap();
 
     let bn_conf = BatchNormConf { num_features: 3 };
-    let layer = bn_conf.to_layer().unwrap();
+    let mut layer = bn_conf.to_layer().unwrap();
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
     if let TensorValue::Float32(output) = &output[0] {

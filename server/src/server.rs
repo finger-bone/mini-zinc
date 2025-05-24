@@ -1,18 +1,21 @@
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use std::thread;
+use std::sync::Arc;
+use std::time::Instant;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use warp::Filter;
+use tokio::sync::{mpsc, oneshot, RwLock}; // Use tokio's RwLock for async context
 
 use crate::cgraph::graph::ComputationGraph;
 use crate::op::dtype::TensorValue;
+
 
 // 服务器状态结构体
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ServerStatus {
     pub is_busy: bool,
+    // Add other relevant server status fields here if needed
 }
 
 // 推理请求结构体
@@ -27,7 +30,7 @@ pub struct InferenceResponse {
     pub outputs: HashMap<usize, TensorValueWrapper>,
     pub success: bool,
     pub message: String,
-    pub duration_ms: u128, // 新增字段
+    pub duration_ms: u128,
 }
 
 // TensorValue的包装器，用于序列化和反序列化
@@ -144,115 +147,197 @@ impl From<TensorValue> for TensorValueWrapper {
     }
 }
 
+// Message type for sending inference requests to the dedicated thread
+struct InferenceRequestMessage {
+    request: InferenceRequest,
+    response_sender: oneshot::Sender<InferenceResponse>,
+}
+
+
 pub struct InferenceServer {
-    model: Arc<ComputationGraph>,
+    // Sender to send requests to the dedicated inference thread
+    request_sender: mpsc::Sender<InferenceRequestMessage>,
+    // Server status, managed by the main server loop
     status: Arc<RwLock<ServerStatus>>,
 }
 
 impl InferenceServer {
     pub fn new(model_param_path: &str, model_weight_path: &str) -> Result<Self> {
-        let model = ComputationGraph::from_pnnx(model_param_path, model_weight_path)?;
+        let (request_sender, request_receiver) = mpsc::channel::<InferenceRequestMessage>(100);
+
+        let model_param_path_clone = model_param_path.to_string();
+        let model_weight_path_clone = model_weight_path.to_string();
+
+        std::thread::spawn(move || {
+            let model = match ComputationGraph::from_pnnx(
+                &model_param_path_clone,
+                &model_weight_path_clone,
+            ) {
+                Ok(m) => m,
+                Err(e) => {
+                    eprintln!("Failed to load ComputationGraph in inference thread: {}", e);
+                    return;
+                }
+            };
+
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("Failed to create Tokio runtime for inference worker");
+
+            rt.block_on(async {
+                Self::inference_worker(model, request_receiver).await;
+            });
+        });
+
         Ok(Self {
-            model: Arc::new(model),
+            request_sender,
             status: Arc::new(RwLock::new(ServerStatus { is_busy: false })),
         })
     }
 
+    async fn inference_worker(
+        mut model: ComputationGraph,
+        mut receiver: mpsc::Receiver<InferenceRequestMessage>,
+    ) {
+        println!("Inference worker thread started.");
+        while let Some(msg) = receiver.recv().await {
+            let InferenceRequestMessage {
+                request,
+                response_sender,
+            } = msg;
+
+            let start = Instant::now();
+            let mut inputs = HashMap::new();
+            for (k, v) in request.inputs {
+                inputs.insert(k, TensorValue::from(v));
+            }
+
+            let result = match model.compute(&inputs) {
+                Ok(outputs) => {
+                    let duration = start.elapsed().as_millis();
+                    let mut response_outputs = HashMap::new();
+                    for (k, v) in outputs {
+                        response_outputs.insert(k, TensorValueWrapper::from(v));
+                    }
+                    InferenceResponse {
+                        outputs: response_outputs,
+                        success: true,
+                        message: "Inference successful".to_string(),
+                        duration_ms: duration,
+                    }
+                }
+                Err(e) => {
+                    let duration = start.elapsed().as_millis();
+                    InferenceResponse {
+                        outputs: HashMap::new(),
+                        success: false,
+                        message: format!("Inference failed: {}", e),
+                        duration_ms: duration,
+                    }
+                }
+            };
+
+            if let Err(_) = response_sender.send(result) {
+                eprintln!("Failed to send inference response back to request handler.");
+            }
+        }
+        println!("Inference worker thread shutting down.");
+    }
+
     pub fn start(self, port: u16) -> Result<()> {
-        let model: Arc<ComputationGraph> = self.model.clone();
-        let status = self.status.clone();
+        let request_sender = self.request_sender.clone();
+        let server_status = self.status.clone();
 
-        // 启动状态监控线程
-        let status_thread = status.clone();
-        thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                let status_route = warp::path("status").and(warp::get()).map(move || {
-                    let status = status_thread.read().unwrap();
-                    warp::reply::json(&*status)
-                });
-
-                warp::serve(status_route).run(([127, 0, 0, 1], 3031)).await;
+        // Status route - CHANGED TO and_then
+        let status_route = warp::path("status")
+            .and(warp::get())
+            .and_then(move || { // Use and_then for async operations
+                let server_status_clone = server_status.clone();
+                async move {
+                    let status = server_status_clone.read().await;
+                    // Wrap the reply in Ok for and_then
+                    Ok::<_, warp::Rejection>(warp::reply::json(&*status))
+                }
             });
-        });
 
-        // 启动主推理服务
-        let rt = tokio::runtime::Runtime::new()?;
-        rt.block_on(async {
-            let infer_status = status.clone();
-            let infer_model = model.clone();
+        // Inference route (already using and_then correctly)
+        let infer_sender_clone = request_sender.clone();
+        let infer_status_clone = self.status.clone();
 
-            let infer_route = warp::path("infer")
-                .and(warp::post())
-                .and(warp::body::json())
-                .and_then(move |request: InferenceRequest| {
-                    let infer_status = infer_status.clone();
-                    let infer_model = infer_model.clone();
+        let infer_route = warp::path("infer")
+            .and(warp::post())
+            .and(warp::body::json())
+            .and_then(move |request: InferenceRequest| {
+                let infer_sender = infer_sender_clone.clone();
+                let infer_status = infer_status_clone.clone();
 
-                    async move {
-                        // 检查服务器是否忙碌
-                        {
-                            let mut status = infer_status.write().unwrap();
-                            if status.is_busy {
-                                return Ok::<_, warp::Rejection>(warp::reply::json(
-                                    &InferenceResponse {
-                                        outputs: HashMap::new(),
-                                        success: false,
-                                        message: "Server is busy".to_string(),
-                                        duration_ms: 0,
-                                    },
-                                ));
-                            }
-                            status.is_busy = true;
+                async move {
+                    let (response_tx, response_rx) = oneshot::channel::<InferenceResponse>();
+
+                    {
+                        let mut status_guard = infer_status.write().await;
+                        if status_guard.is_busy {
+                            return Ok::<_, warp::Rejection>(warp::reply::json(
+                                &InferenceResponse {
+                                    outputs: HashMap::new(),
+                                    success: false,
+                                    message: "Server is busy".to_string(),
+                                    duration_ms: 0,
+                                },
+                            ));
                         }
+                        status_guard.is_busy = true;
+                    }
 
-                        // 转换输入
-                        let mut inputs = HashMap::new();
-                        for (k, v) in request.inputs {
-                            inputs.insert(k, TensorValue::from(v));
-                        }
+                    let send_result = infer_sender
+                        .send(InferenceRequestMessage {
+                            request,
+                            response_sender: response_tx,
+                        })
+                        .await;
 
-                        // 执行推理
-                        let start = std::time::Instant::now(); // 新增开始计时
-                        let result = match infer_model.compute(&inputs) {
-                            Ok(outputs) => {
-                                // 转换输出
-                                let duration = start.elapsed().as_millis();
-                                let mut response_outputs = HashMap::new();
-                                for (k, v) in outputs {
-                                    response_outputs.insert(k, TensorValueWrapper::from(v));
-                                }
-                                InferenceResponse {
-                                    outputs: response_outputs,
-                                    success: true,
-                                    message: "Inference successful".to_string(),
-                                    duration_ms: duration, // 填充耗时
-                                }
-                            }
-                            Err(e) => {
-                                let duration = start.elapsed().as_millis(); // 失败情况也记录时间
+                    let inference_response = match send_result {
+                        Ok(_) => {
+                            response_rx.await.unwrap_or_else(|_| {
                                 InferenceResponse {
                                     outputs: HashMap::new(),
                                     success: false,
-                                    message: format!("Inference failed: {}", e),
-                                    duration_ms: duration, // 填充耗时
+                                    message: "Inference worker failed to send response".to_string(),
+                                    duration_ms: 0,
                                 }
-                            }
-                        };
-
-                        // 更新服务器状态
-                        {
-                            let mut status = infer_status.write().unwrap();
-                            status.is_busy = false;
+                            })
                         }
+                        Err(e) => {
+                            eprintln!("Failed to send inference request to worker: {}", e);
+                            InferenceResponse {
+                                outputs: HashMap::new(),
+                                success: false,
+                                message: "Server internal error: inference worker unavailable".to_string(),
+                                duration_ms: 0,
+                            }
+                        }
+                    };
 
-                        Ok(warp::reply::json(&result))
+                    {
+                        let mut status_guard = infer_status.write().await;
+                        status_guard.is_busy = false;
                     }
-                });
 
-            println!("Inference server running at http://127.0.0.1:{}", port);
-            warp::serve(infer_route).run(([127, 0, 0, 1], port)).await;
-        });
+                    Ok(warp::reply::json(&inference_response))
+                }
+            });
+
+        let routes = infer_route.or(status_route);
+
+        println!("Inference server running at http://127.0.0.1:{}", port);
+
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()?
+            .block_on(async {
+                warp::serve(routes).run(([127, 0, 0, 1], port)).await;
+            });
 
         Ok(())
     }

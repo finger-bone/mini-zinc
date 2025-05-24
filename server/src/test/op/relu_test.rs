@@ -6,7 +6,7 @@ use crate::op::dtype::TensorValue;
 #[test]
 fn test_relu_forward() {
     let relu = ReLUConf { threshold: 0.0 };
-    let layer = relu.to_layer().unwrap();
+    let mut layer = relu.to_layer().unwrap();
 
     // 测试正数保持不变
     let input = ArrayD::from_shape_vec(vec![2, 2], vec![1.0, 2.0, 3.0, 4.0]).unwrap();
@@ -38,7 +38,7 @@ fn test_relu_forward() {
 
     // 测试自定义阈值
     let relu = ReLUConf { threshold: 2.0 };
-    let layer = relu.to_layer().unwrap();
+    let mut layer = relu.to_layer().unwrap();
     let input = ArrayD::from_shape_vec(vec![2, 2], vec![1.0, 2.0, 3.0, 4.0]).unwrap();
     let output = layer
         .forward(&vec![TensorValue::Float32(input.clone())])

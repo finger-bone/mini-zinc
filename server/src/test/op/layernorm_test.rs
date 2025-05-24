@@ -27,7 +27,7 @@ fn test_layernorm_forward() {
         bias: TensorValue::Float32(beta),
     };
 
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 

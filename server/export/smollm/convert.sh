@@ -1,0 +1,1 @@
+pnnx smollm.pt inputshape="[1,32]i64,[1,32]i64" pnnxparam=smollm.pnnx.param pnnxbin=smollm.pnnx.bin

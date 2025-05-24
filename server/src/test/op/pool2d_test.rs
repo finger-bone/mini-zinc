@@ -25,7 +25,7 @@ fn test_maxpool_forward() {
         pool_type: PoolType::Max,
     };
 
-    let layer = pool.to_layer().unwrap();
+    let mut layer = pool.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -72,7 +72,7 @@ fn test_avgpool_forward() {
         pool_type: PoolType::Avg,
     };
 
-    let layer = pool.to_layer().unwrap();
+    let mut layer = pool.to_layer().unwrap();
 
     // Forward pass
     let output = layer.forward(&vec![input]).unwrap();
@@ -116,7 +116,7 @@ fn test_maxpool_value() {
         pool_type: PoolType::Max,
     };
 
-    let layer = pool.to_layer().unwrap();
+    let mut layer = pool.to_layer().unwrap();
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Float32(output_array) = &output[0] {
@@ -168,7 +168,7 @@ fn test_maxpool_multi_channel() {
         pool_type: PoolType::Max,
     };
 
-    let layer = pool.to_layer().unwrap();
+    let mut layer = pool.to_layer().unwrap();
     let output = layer.forward(&vec![input]).unwrap();
 
     if let TensorValue::Float32(output_array) = &output[0] {

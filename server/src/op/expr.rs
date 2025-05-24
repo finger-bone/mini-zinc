@@ -24,6 +24,7 @@ pub enum ExprOp {
     Add,
     Mul,
     Sub,
+    Neg,
     Input(usize),
     Constant(f32),
 }
@@ -120,6 +121,18 @@ fn sub_parser(input: &str) -> IResult<&str, Expr> {
     ))
 }
 
+fn neg_parser(input: &str) -> IResult<&str, Expr> {
+    let (input, _) = tag("neg").parse(input)?;
+    let (input, child) = delimited(char('('), expr_parser, char(')')).parse(input)?;
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Neg,
+            children: vec![child],
+        }
+    ))
+}
+
 // 重点：nom 8 写法，使用 `.parse(input)`
 fn expr_parser(input: &str) -> IResult<&str, Expr> {
     alt((
@@ -128,6 +141,7 @@ fn expr_parser(input: &str) -> IResult<&str, Expr> {
         add_parser,
         mul_parser,
         sub_parser,
+        neg_parser,
     ))
     .parse(input)
 }
@@ -139,7 +153,7 @@ pub struct ExprLayer {
 }
 
 impl Forward for ExprLayer {
-    fn forward(&self, inputs: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, inputs: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         let inputs = inputs
             .iter()
             .map(|v| match v {
@@ -171,6 +185,10 @@ impl Forward for ExprLayer {
                         result -= &eval_expr(child, inputs);
                     }
                     result
+                }
+                ExprOp::Neg => {
+                    let child = &expr.children[0];
+                    -eval_expr(child, inputs)
                 }
             }
         }

@@ -13,7 +13,7 @@ pub struct ExpandLayer {
 }
 
 impl Forward for ExpandLayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         let target_shape = IxDyn(&self.lconf.shape);
 
         match &input[0] {

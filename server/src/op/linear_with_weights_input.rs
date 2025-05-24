@@ -13,7 +13,7 @@ pub struct LinearLayerWithWeightsInput {
 }
 
 impl Forward for LinearLayerWithWeightsInput {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // ?
         let TensorValue::Float32(weights) = &input[0] else {
             return Err(anyhow::anyhow!("Unsupported input type for Linear"));

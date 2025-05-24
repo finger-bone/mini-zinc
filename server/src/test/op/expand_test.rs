@@ -9,7 +9,7 @@ fn test_expand_forward() {
     let expand = ExpandConf {
         shape: vec![2, 3], // 目标形状
     };
-    let layer = expand.to_layer().unwrap();
+    let mut layer = expand.to_layer().unwrap();
 
     // 输入形状为[2,1]，可以广播到[2,3]
     let input = ArrayD::from_shape_vec(vec![2, 1], vec![1.0, 2.0]).unwrap();
@@ -30,7 +30,7 @@ fn test_expand_incompatible_shape() {
     let expand = ExpandConf {
         shape: vec![2, 4], // 与输入形状不兼容
     };
-    let layer = expand.to_layer().unwrap();
+    let mut layer = expand.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![2, 3], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     let result = layer.forward(&vec![TensorValue::Float32(input)]);
@@ -44,7 +44,7 @@ fn test_expand_incompatible_shape() {
 fn test_expand_no_change() {
     // 输入形状与目标形状一致
     let expand = ExpandConf { shape: vec![3, 2] };
-    let layer = expand.to_layer().unwrap();
+    let mut layer = expand.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![3, 2], vec![1.0; 6]).unwrap();
     let output = layer

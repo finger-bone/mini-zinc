@@ -25,7 +25,7 @@ fn test_embedding_forward_normal_case() {
     let embedding = EmbeddingConf {
         weight: weight.clone(),
     };
-    let layer = embedding.to_layer().unwrap();
+    let mut layer = embedding.to_layer().unwrap();
 
     // 输入：每个位置是词索引
     let indices = TensorValue::Int64(ArrayD::from_shape_vec(vec![1, 3], vec![0i64, 2, 3]).unwrap());

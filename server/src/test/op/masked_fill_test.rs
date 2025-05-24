@@ -7,7 +7,7 @@ use crate::op::dtype::TensorValue;
 #[test]
 fn test_masked_fill_all_true() {
     let conf = MaskedFillConf { value: 5.0 };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let data = ArrayD::from_shape_vec(vec![3], vec![1.0, 2.0, 3.0]).unwrap();
     let mask = ArrayD::from_shape_vec(vec![3], vec![true; 3]).unwrap();
@@ -30,7 +30,7 @@ fn test_masked_fill_all_true() {
 #[test]
 fn test_masked_fill_all_false() {
     let conf = MaskedFillConf { value: 10.0 };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let data = ArrayD::from_shape_vec(vec![4], vec![1.5, 2.5, 3.5, 4.5]).unwrap();
     let mask = ArrayD::from_shape_vec(vec![4], vec![false; 4]).unwrap();
@@ -53,7 +53,7 @@ fn test_masked_fill_all_false() {
 #[test]
 fn test_masked_fill_2d() {
     let conf = MaskedFillConf { value: -1.0 };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let data = ArrayD::from_shape_vec(vec![2, 2], vec![10.0, 20.0, 30.0, 40.0]).unwrap();
     let mask = ArrayD::from_shape_vec(vec![2, 2], vec![false, true, true, false]).unwrap();

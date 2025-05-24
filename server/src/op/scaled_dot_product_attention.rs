@@ -25,7 +25,7 @@ impl ScaledDotProductAttention {
 }
 
 impl Forward for ScaledDotProductAttention {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // 处理输入：Q, K, V, 可选的mask
         let TensorValue::Float32(q) = &input[0] else {
             return Err(anyhow::anyhow!(

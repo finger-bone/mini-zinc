@@ -9,7 +9,7 @@ fn test_view_forward() {
         // input_shape: vec![2, 3],
         output_shape: vec![6],
     };
-    let layer = view.to_layer().unwrap();
+    let mut layer = view.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![2, 3], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     let output = layer
@@ -27,7 +27,7 @@ fn test_view_forward() {
         // input_shape: vec![2, 2, 2],
         output_shape: vec![4, 2],
     };
-    let layer = view.to_layer().unwrap();
+    let mut layer = view.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![2, 2, 2], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
         .unwrap();
@@ -50,7 +50,7 @@ fn test_view_shape_mismatch() {
         // input_shape: vec![2, 3],
         output_shape: vec![5], // 元素数量不匹配
     };
-    let layer = view.to_layer().unwrap();
+    let mut layer = view.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![2, 3], vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     layer.forward(&vec![TensorValue::Float32(input)]).unwrap(); // 这里应该会panic

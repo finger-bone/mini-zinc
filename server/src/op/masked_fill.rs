@@ -13,7 +13,7 @@ pub struct MaskedFillLayer {
 }
 
 impl Forward for MaskedFillLayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         let TensorValue::Float32(data) = &input[0] else {
             return Err(anyhow::anyhow!("First input must be Float32"));
         };

@@ -23,7 +23,7 @@ fn test_linear_forward() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.5, -0.5]).unwrap()),
     };
 
-    let layer = linear_conf.to_layer().unwrap();
+    let mut layer = linear_conf.to_layer().unwrap();
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
     if let TensorValue::Float32(output) = &output[0] {
@@ -81,7 +81,7 @@ fn test_linear_3d_input() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = linear.to_layer().unwrap();
+    let mut layer = linear.to_layer().unwrap();
 
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 
@@ -113,7 +113,7 @@ fn test_linear_4d_input() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = linear.to_layer().unwrap();
+    let mut layer = linear.to_layer().unwrap();
 
     let output = layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
     if let TensorValue::Float32(output) = &output[0] {
@@ -137,7 +137,7 @@ fn test_linear_invalid_features() {
         bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap()),
     };
 
-    let layer = linear.to_layer().unwrap();
+    let mut layer = linear.to_layer().unwrap();
 
     layer.forward(&vec![TensorValue::Float32(input)]).unwrap(); // Should panic
 }

@@ -10,7 +10,7 @@ pub struct TransposeLayer {
 }
 
 impl Forward for TransposeLayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
         let TensorValue::Float32(input) = &input[0] else {
             return Err(anyhow::anyhow!("Unsupported input type for Transpose"));

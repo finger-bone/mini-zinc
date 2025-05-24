@@ -9,7 +9,7 @@ fn test_flatten_forward() {
         start_dim: 1,
         end_dim: 2,
     };
-    let layer = flatten.to_layer().unwrap();
+    let mut layer = flatten.to_layer().unwrap();
 
     let input =
         ArrayD::from_shape_vec(vec![2, 3, 4], (1..=24).map(|x| x as f32).collect()).unwrap();
@@ -33,7 +33,7 @@ fn test_flatten_with_negative_dims() {
         start_dim: -2,
         end_dim: -1,
     };
-    let layer = flatten.to_layer().unwrap();
+    let mut layer = flatten.to_layer().unwrap();
 
     let input =
         ArrayD::from_shape_vec(vec![2, 3, 4], (1..=24).map(|x| x as f32).collect()).unwrap();
@@ -58,7 +58,7 @@ fn test_flatten_invalid_dims() {
         start_dim: 2,
         end_dim: 1, // Invalid: start_dim > end_dim
     };
-    let layer = flatten.to_layer().unwrap();
+    let mut layer = flatten.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![2, 3, 4], vec![1.0; 24]).unwrap();
     layer.forward(&vec![TensorValue::Float32(input)]).unwrap(); // This should panic

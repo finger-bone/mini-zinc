@@ -7,7 +7,7 @@ fn test_float32_to_int64() {
     let conf = TensorToConf {
         target_dtype: DataType::Int64,
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let input = TensorValue::Float32(
         ArrayD::from_shape_vec(IxDyn(&[3]), vec![1.5f32, -2.3f32, 4.0f32]).unwrap(),
@@ -28,7 +28,7 @@ fn test_float32_to_boolean() {
     let conf = TensorToConf {
         target_dtype: DataType::Boolean,
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     // let input = TensorValue::Float32(ArrayD::from(vec![0.0, 3.14, -0.0, 1e-5]));
     let input = TensorValue::Float32(
@@ -49,7 +49,7 @@ fn test_float32_to_float16() {
     let conf = TensorToConf {
         target_dtype: DataType::Float16,
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let input =
         TensorValue::Float32(ArrayD::from_shape_vec(IxDyn(&[2]), vec![0.123456, -0.789]).unwrap());
@@ -71,7 +71,7 @@ fn test_int64_to_float32() {
     let conf = TensorToConf {
         target_dtype: DataType::Float32,
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let input = TensorValue::Int64(ArrayD::from_shape_vec(IxDyn(&[3]), vec![1i64, -2, 4]).unwrap());
 
@@ -89,7 +89,7 @@ fn test_int64_to_boolean() {
     let conf = TensorToConf {
         target_dtype: DataType::Boolean,
     };
-    let layer = conf.to_layer().unwrap();
+    let mut layer = conf.to_layer().unwrap();
 
     let input = TensorValue::Int64(ArrayD::from_shape_vec(IxDyn(&[4]), vec![0, -5, 3, 0]).unwrap());
 

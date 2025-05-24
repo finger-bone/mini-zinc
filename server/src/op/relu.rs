@@ -12,7 +12,7 @@ pub struct ReLULayer {
 }
 
 impl Forward for ReLULayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
         let TensorValue::Float32(input) = &input[0] else {
             return Err(anyhow::anyhow!("Unsupported input type for ReLU"));
@@ -59,7 +59,7 @@ impl ToLayer for conf::ReLUConf {
             lconf,
             pro_que: ProQue::builder()
                 .dims(256)
-                .src(include_str!("./relu.cl"))
+                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./relu.cl")))
                 .build()
                 .unwrap(),
         }))

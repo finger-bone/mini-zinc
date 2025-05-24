@@ -9,7 +9,7 @@ fn test_transpose_forward() {
     // ---------- 测试 2D 转置 ----------
     let input = ArrayD::from_shape_vec(IxDyn(&[2, 3]), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     let transpose_conf = TransposeConf { dim0: 0, dim1: 1 };
-    let layer = transpose_conf.to_layer().unwrap();
+    let mut layer = transpose_conf.to_layer().unwrap();
 
     let output = layer
         .forward(&vec![TensorValue::Float32(input.clone())])
@@ -68,7 +68,7 @@ fn test_transpose_forward() {
 fn test_transpose_insufficient_dimensions() {
     let input = ArrayD::from_shape_vec(IxDyn(&[3]), vec![1.0, 2.0, 3.0]).unwrap();
     let transpose_conf = TransposeConf { dim0: 0, dim1: 1 };
-    let layer = transpose_conf.to_layer().unwrap();
+    let mut layer = transpose_conf.to_layer().unwrap();
     layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 }
 
@@ -77,6 +77,6 @@ fn test_transpose_insufficient_dimensions() {
 fn test_transpose_dimensions_out_of_range() {
     let input = ArrayD::from_shape_vec(IxDyn(&[2, 3]), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
     let transpose_conf = TransposeConf { dim0: 0, dim1: 2 };
-    let layer = transpose_conf.to_layer().unwrap();
+    let mut layer = transpose_conf.to_layer().unwrap();
     layer.forward(&vec![TensorValue::Float32(input)]).unwrap();
 }

@@ -30,11 +30,11 @@ fn test_cgnode_from_flatten_line() {
 
     let weights = HashMap::new(); // No weights needed for Flatten
 
-    let node = CGNode::from_line(&line, &weights).unwrap();
+    let mut node = CGNode::from_line(&line, &weights).unwrap();
 
     // Validate the parsed node
     assert_eq!(node.name, "flatten_0");
-    match &node.op {
+    match &mut node.op {
         CGNodeOp::Op(layer) => {
             let input_tensor = TensorValue::Float32(ndarray::ArrayD::zeros(vec![2, 3, 4])); // 3-dimensional tensor
             if let TensorValue::Float32(output_tensor) =
