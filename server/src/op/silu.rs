@@ -56,7 +56,10 @@ impl ToLayer for conf::SiLUConf {
             lconf,
             pro_que: ProQue::builder()
                 .dims(512)
-                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./silu.cl")))
+                .src(format!(
+                    "#define TILE_SIZE 32\n{}",
+                    include_str!("./silu.cl")
+                ))
                 .build()
                 .unwrap(),
         }))

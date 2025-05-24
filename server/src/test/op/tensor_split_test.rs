@@ -8,7 +8,7 @@ use crate::op::dtype::TensorValue;
 fn test_tensor_split_forward_simple() -> Result<()> {
     // 1. Build operator configuration
     let conf = TensorSplitConf {
-        dim: 1, // Split along the second dimension (columns)
+        dim: 1,           // Split along the second dimension (columns)
         indices: vec![2], // Split at index 2
     };
 
@@ -20,8 +20,8 @@ fn test_tensor_split_forward_simple() -> Result<()> {
     // [[1, 2, 3, 4],
     //  [5, 6, 7, 8]]
     let input_data = ArrayD::from_shape_vec(
-        ndarray::IxDyn(&[2, 4]), 
-        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+        ndarray::IxDyn(&[2, 4]),
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
     )?;
     let inputs = vec![TensorValue::Float32(input_data)];
 
@@ -37,7 +37,10 @@ fn test_tensor_split_forward_simple() -> Result<()> {
     // Check first output tensor
     if let TensorValue::Float32(output1) = &outputs[0] {
         assert_eq!(output1.shape(), &[2, 2]);
-        assert_eq!(output1.iter().copied().collect::<Vec<_>>(), vec![1.0, 2.0, 5.0, 6.0]);
+        assert_eq!(
+            output1.iter().copied().collect::<Vec<_>>(),
+            vec![1.0, 2.0, 5.0, 6.0]
+        );
     } else {
         panic!("Expected Float32 output tensor for outputs[0]");
     }
@@ -45,7 +48,10 @@ fn test_tensor_split_forward_simple() -> Result<()> {
     // Check second output tensor
     if let TensorValue::Float32(output2) = &outputs[1] {
         assert_eq!(output2.shape(), &[2, 2]);
-        assert_eq!(output2.iter().copied().collect::<Vec<_>>(), vec![3.0, 4.0, 7.0, 8.0]);
+        assert_eq!(
+            output2.iter().copied().collect::<Vec<_>>(),
+            vec![3.0, 4.0, 7.0, 8.0]
+        );
     } else {
         panic!("Expected Float32 output tensor for outputs[1]");
     }
@@ -56,7 +62,7 @@ fn test_tensor_split_forward_simple() -> Result<()> {
 #[test]
 fn test_tensor_split_forward_multiple_indices() -> Result<()> {
     let conf = TensorSplitConf {
-        dim: 0, // Split along the first dimension (rows)
+        dim: 0,              // Split along the first dimension (rows)
         indices: vec![1, 3], // Split at row index 1, then at row index 3
     };
     let mut layer = conf.to_layer()?;
@@ -66,8 +72,8 @@ fn test_tensor_split_forward_multiple_indices() -> Result<()> {
     //  [5, 6],
     //  [7, 8]]
     let input_data = ArrayD::from_shape_vec(
-        ndarray::IxDyn(&[4, 2]), 
-        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+        ndarray::IxDyn(&[4, 2]),
+        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
     )?;
     let inputs = vec![TensorValue::Float32(input_data)];
     let outputs = layer.forward(&inputs)?;
@@ -81,7 +87,10 @@ fn test_tensor_split_forward_multiple_indices() -> Result<()> {
     }
     if let TensorValue::Float32(output2) = &outputs[1] {
         assert_eq!(output2.shape(), &[2, 2]);
-        assert_eq!(output2.iter().copied().collect::<Vec<_>>(), vec![3.0, 4.0, 5.0, 6.0]);
+        assert_eq!(
+            output2.iter().copied().collect::<Vec<_>>(),
+            vec![3.0, 4.0, 5.0, 6.0]
+        );
     }
     if let TensorValue::Float32(output3) = &outputs[2] {
         assert_eq!(output3.shape(), &[1, 2]);
@@ -108,7 +117,10 @@ fn test_tensor_split_negative_dim() -> Result<()> {
     }
     if let TensorValue::Float32(output2) = &outputs[1] {
         assert_eq!(output2.shape(), &[2, 2]);
-        assert_eq!(output2.iter().copied().collect::<Vec<_>>(), vec![2.0, 3.0, 5.0, 6.0]);
+        assert_eq!(
+            output2.iter().copied().collect::<Vec<_>>(),
+            vec![2.0, 3.0, 5.0, 6.0]
+        );
     }
     Ok(())
 }

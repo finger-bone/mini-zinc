@@ -10,7 +10,11 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, CatConf, ContiguousConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf, MaskedFillConf, Pool2dConf, PoolType, RSMNormConf, ReLUConf, ScaledDotProductAttentionConf, ScalerEqConf, SiLUConf, TensorSplitConf, TensorToConf, TransposeConf, UnsqueezeConf, ViewConf
+            AdaptivePool2dConf, CatConf, ContiguousConf, Conv2dConf, EmbeddingConf, ExpandConf,
+            ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf,
+            MaskedFillConf, Pool2dConf, PoolType, RSMNormConf, ReLUConf,
+            ScaledDotProductAttentionConf, ScalerEqConf, SiLUConf, TensorSplitConf, TensorToConf,
+            TransposeConf, UnsqueezeConf, ViewConf,
         },
         layer::Forward,
     },
@@ -375,77 +379,52 @@ impl CGNode {
             "torch.eq" => {
                 // torch.eq                 torch.eq_460             1 1 7 8 other=0 $input=7 #7=(1,1,32,32)f32 #8=(1,1,32,32)bool
                 let (_, other) = parse_f32
-                   .parse(&line.get("other", PNNXKVType::Attr).unwrap().value)
-                   .unwrap();
-                Ok(CGNodeOp::Op(
-                    ScalerEqConf {
-                        other,
-                    }
-                   .to_layer()
-                   .unwrap(),
-                ))
+                    .parse(&line.get("other", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
+                Ok(CGNodeOp::Op(ScalerEqConf { other }.to_layer().unwrap()))
             }
             // Tensor.contiguous        Tensor.contiguous_523    1 1 28 40 memory_format=torch.contiguous_format $input=28 #28=(1,9,32,64)f32 #40=(1,9,32,64)f32
-            "Tensor.contiguous" => {
-                Ok(CGNodeOp::Op(
-                    ContiguousConf {
-                        
-                    }
-                    .to_layer()
-                    .unwrap(),
-                ))
-            }
+            "Tensor.contiguous" => Ok(CGNodeOp::Op(ContiguousConf {}.to_layer().unwrap())),
             // torch.cat                torch.cat_1050           2 1 73 71 74 dim=-1 #73=(1,9,32,32)f32 #71=(1,9,32,32)f32 #74=(1,9,32,64)f32
             "torch.cat" => {
                 let (_, dim) = parse_isize
                     .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
                     .unwrap();
-                Ok(CGNodeOp::Op(
-                    CatConf {
-                        dim,
-                    }
-                    .to_layer()
-                    .unwrap(),
-                ))
+                Ok(CGNodeOp::Op(CatConf { dim }.to_layer().unwrap()))
             }
             // torch.tensor_split       Tensor.slice_1395        1 2 63 76 77 dim=3 indices=(32) #63=(1,3,32,64)f32 #76=(1,3,32,32)f32 #77=(1,3,32,32)f32
             "torch.tensor_split" => {
                 let (_, indices) = parse_usize_tuple
-                   .parse(&line.get("indices", PNNXKVType::Attr).unwrap().value)
-                   .unwrap();
+                    .parse(&line.get("indices", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
                 let (_, dim) = parse_isize
-                   .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
-                   .unwrap();
+                    .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
                 Ok(CGNodeOp::Op(
-                    TensorSplitConf {
-                        dim,
-                        indices,
-                    }
-                    .to_layer()
-                    .unwrap(),
+                    TensorSplitConf { dim, indices }.to_layer().unwrap(),
                 ))
             }
             // nn.RMSNorm               rmsnorm_3                1 1 96 97 elementwise_affine=True eps=1.000000e-05 normalized_shape=(576) @weight=(576)f32 $input=96 #96=(1,32,576)f32 #97=(1,32,576)f32
             "nn.RMSNorm" => {
                 let (_, eps) = parse_f32
-                   .parse(&line.get("eps", PNNXKVType::Attr).unwrap().value)
-                   .unwrap();
+                    .parse(&line.get("eps", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
                 let (_, elementwise_affine) = parse_bool
-                   .parse(
+                    .parse(
                         &line
-                           .get("elementwise_affine", PNNXKVType::Attr)
-                          .unwrap()
-                          .value,
+                            .get("elementwise_affine", PNNXKVType::Attr)
+                            .unwrap()
+                            .value,
                     )
                     .unwrap();
                 let (_, normalized_shape) = parse_usize_tuple
-                  .parse(
+                    .parse(
                         &line
-                          .get("normalized_shape", PNNXKVType::Attr)
-                         .unwrap()
-                         .value,
+                            .get("normalized_shape", PNNXKVType::Attr)
+                            .unwrap()
+                            .value,
                     )
-                   .unwrap();
+                    .unwrap();
                 let layer_norm_weight =
                     weights.get(&line.get_tensor_key("weight")).unwrap().clone();
                 Ok(CGNodeOp::Op(
@@ -462,14 +441,10 @@ impl CGNode {
             // torch.unsqueeze          torch.unsqueeze_1255     1 1 221 222 dim=2 $input=221 #221=(1,3,32,64)f32 #222=(1,3,1,32,64)f32
             "torch.unsqueeze" => {
                 let (_, dim) = parse_isize
-                  .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
-                  .unwrap();
+                    .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
+                    .unwrap();
                 Ok(CGNodeOp::Op(
-                    UnsqueezeConf {
-                        axes: vec![dim],
-                    }
-                   .to_layer()
-                   .unwrap(),
+                    UnsqueezeConf { axes: vec![dim] }.to_layer().unwrap(),
                 ))
             }
             // nn.SiLU                  model.model.layers.4.mlp.act_fn 1 1 239 240 #239=(1,32,1536)f32 #240=(1,32,1536)f32

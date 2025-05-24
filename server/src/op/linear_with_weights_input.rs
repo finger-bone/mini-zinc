@@ -94,11 +94,10 @@ impl Forward for LinearLayerWithWeightsInput {
             Some(TensorValue::Float32(bias)) => bias,
             None => {
                 // If bias is None, create a zero-filled tensor
-                let zero_bias = ArrayD::zeros(ndarray::IxDyn(&[
-                    batch_size * self.lconf.out_features,
-                ]));
+                let zero_bias =
+                    ArrayD::zeros(ndarray::IxDyn(&[batch_size * self.lconf.out_features]));
                 &zero_bias.clone()
-            },
+            }
             _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
         };
         // Create bias buffer

@@ -20,7 +20,9 @@ fn test_linear_forward() {
             )
             .unwrap(),
         ),
-        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.5, -0.5]).unwrap())),
+        bias: Some(TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2], vec![0.5, -0.5]).unwrap(),
+        )),
     };
 
     let mut layer = linear_conf.to_layer().unwrap();
@@ -78,7 +80,9 @@ fn test_linear_3d_input() {
             ArrayD::from_shape_vec(vec![2, 4], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
                 .unwrap(),
         ),
-        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap())),
+        bias: Some(TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        )),
     };
 
     let mut layer = linear.to_layer().unwrap();
@@ -110,7 +114,9 @@ fn test_linear_4d_input() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
         ),
-        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap())),
+        bias: Some(TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        )),
     };
 
     let mut layer = linear.to_layer().unwrap();
@@ -134,7 +140,9 @@ fn test_linear_invalid_features() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![2, 3], vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6]).unwrap(),
         ),
-        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap())),
+        bias: Some(TensorValue::Float32(
+            ArrayD::from_shape_vec(vec![2], vec![0.1, 0.2]).unwrap(),
+        )),
     };
 
     let mut layer = linear.to_layer().unwrap();

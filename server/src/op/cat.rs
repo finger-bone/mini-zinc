@@ -1,4 +1,7 @@
-use super::{conf::{self, ToLayer}, layer::Forward};
+use super::{
+    conf::{self, ToLayer},
+    layer::Forward,
+};
 use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::Axis;

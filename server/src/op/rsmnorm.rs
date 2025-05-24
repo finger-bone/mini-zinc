@@ -42,7 +42,9 @@ impl Forward for RSMNormLayer {
             .build()?;
 
         let batch = input_shape[0] as i32;
-        let inner = input_shape[1..input_shape.len() - 1].iter().product::<usize>() as i32;
+        let inner = input_shape[1..input_shape.len() - 1]
+            .iter()
+            .product::<usize>() as i32;
         let channel = input_shape[input_shape.len() - 1] as i32;
         let kernel = self
             .pro_que

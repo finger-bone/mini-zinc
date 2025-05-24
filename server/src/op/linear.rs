@@ -64,7 +64,7 @@ impl Forward for LinearLayer {
             .copy_host_slice(flattened_input.as_slice().unwrap())
             .build()
             .unwrap();
-        
+
         let weights = match &self.lconf.weights {
             TensorValue::Float32(weights) => {
                 assert_eq!(
@@ -85,16 +85,15 @@ impl Forward for LinearLayer {
             .unwrap();
 
         let bias = match &self.lconf.bias {
-                Some(TensorValue::Float32(bias)) => bias,
-                None => {
-                    // If bias is None, create a zero-filled tensor
-                    let zero_bias = ArrayD::zeros(ndarray::IxDyn(&[
-                        batch_size * self.lconf.out_features,
-                    ]));
-                    &zero_bias.clone()
-                },
-                _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
-            };
+            Some(TensorValue::Float32(bias)) => bias,
+            None => {
+                // If bias is None, create a zero-filled tensor
+                let zero_bias =
+                    ArrayD::zeros(ndarray::IxDyn(&[batch_size * self.lconf.out_features]));
+                &zero_bias.clone()
+            }
+            _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
+        };
         // Create bias buffer
         let bias_buffer = self
             .pro_que
@@ -150,7 +149,10 @@ impl ToLayer for conf::LinearConf {
             lconf,
             pro_que: ProQue::builder()
                 .dims(512)
-                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./linear.cl")))
+                .src(format!(
+                    "#define TILE_SIZE 32\n{}",
+                    include_str!("./linear.cl")
+                ))
                 .build()
                 .unwrap(),
         }))

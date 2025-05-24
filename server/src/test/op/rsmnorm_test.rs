@@ -6,11 +6,9 @@ use ndarray::{ArrayD, IxDyn};
 #[test]
 fn test_rsmnorm_forward() {
     // 创建输入张量：2个样本，每个样本4维特征
-    let input = ArrayD::from_shape_vec(
-        IxDyn(&[2, 4]),
-        vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
-    )
-    .unwrap();
+    let input =
+        ArrayD::from_shape_vec(IxDyn(&[2, 4]), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+            .unwrap();
 
     // gamma 初始化为常量 1（即不缩放）
     let gamma = ArrayD::from_shape_vec(IxDyn(&[4]), vec![1.0, 1.0, 1.0, 1.0]).unwrap();
@@ -24,7 +22,9 @@ fn test_rsmnorm_forward() {
 
     let mut layer = conf.to_layer().unwrap();
 
-    let output = layer.forward(&vec![TensorValue::Float32(input.clone())]).unwrap();
+    let output = layer
+        .forward(&vec![TensorValue::Float32(input.clone())])
+        .unwrap();
 
     if let TensorValue::Float32(out) = &output[0] {
         assert_eq!(out.shape(), &[2, 4]);

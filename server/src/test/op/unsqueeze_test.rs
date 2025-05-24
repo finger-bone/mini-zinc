@@ -9,11 +9,16 @@ fn test_unsqueeze_forward() {
     let mut layer = unsqueeze.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![3, 4], (1..=12).map(|x| x as f32).collect()).unwrap();
-    let output = layer.forward(&vec![TensorValue::Float32(input.clone())]).unwrap();
+    let output = layer
+        .forward(&vec![TensorValue::Float32(input.clone())])
+        .unwrap();
     if let TensorValue::Float32(output_arr) = &output[0] {
         assert_eq!(output_arr.shape(), &[1, 3, 1, 4]);
         assert_eq!(output_arr.len(), input.len());
-        assert_eq!(output_arr.iter().cloned().collect::<Vec<_>>(), input.iter().cloned().collect::<Vec<_>>());
+        assert_eq!(
+            output_arr.iter().cloned().collect::<Vec<_>>(),
+            input.iter().cloned().collect::<Vec<_>>()
+        );
     } else {
         panic!("Expected Float32 output");
     }
@@ -26,7 +31,9 @@ fn test_unsqueeze_no_axes() {
     let mut layer = unsqueeze.to_layer().unwrap();
 
     let input = ArrayD::from_shape_vec(vec![2, 2], vec![1.0, 2.0, 3.0, 4.0]).unwrap();
-    let output = layer.forward(&vec![TensorValue::Float32(input.clone())]).unwrap();
+    let output = layer
+        .forward(&vec![TensorValue::Float32(input.clone())])
+        .unwrap();
     if let TensorValue::Float32(output_arr) = &output[0] {
         assert_eq!(output_arr.shape(), &[2, 2]);
         assert_eq!(output_arr, &input);

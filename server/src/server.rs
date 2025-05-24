@@ -4,12 +4,11 @@ use std::time::Instant;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use warp::Filter;
-use tokio::sync::{mpsc, oneshot, RwLock}; // Use tokio's RwLock for async context
+use tokio::sync::{RwLock, mpsc, oneshot};
+use warp::Filter; // Use tokio's RwLock for async context
 
 use crate::cgraph::graph::ComputationGraph;
 use crate::op::dtype::TensorValue;
-
 
 // 服务器状态结构体
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -153,7 +152,6 @@ struct InferenceRequestMessage {
     response_sender: oneshot::Sender<InferenceResponse>,
 }
 
-
 pub struct InferenceServer {
     // Sender to send requests to the dedicated inference thread
     request_sender: mpsc::Sender<InferenceRequestMessage>,
@@ -250,16 +248,15 @@ impl InferenceServer {
         let server_status = self.status.clone();
 
         // Status route - CHANGED TO and_then
-        let status_route = warp::path("status")
-            .and(warp::get())
-            .and_then(move || { // Use and_then for async operations
-                let server_status_clone = server_status.clone();
-                async move {
-                    let status = server_status_clone.read().await;
-                    // Wrap the reply in Ok for and_then
-                    Ok::<_, warp::Rejection>(warp::reply::json(&*status))
-                }
-            });
+        let status_route = warp::path("status").and(warp::get()).and_then(move || {
+            // Use and_then for async operations
+            let server_status_clone = server_status.clone();
+            async move {
+                let status = server_status_clone.read().await;
+                // Wrap the reply in Ok for and_then
+                Ok::<_, warp::Rejection>(warp::reply::json(&*status))
+            }
+        });
 
         // Inference route (already using and_then correctly)
         let infer_sender_clone = request_sender.clone();
@@ -298,22 +295,19 @@ impl InferenceServer {
                         .await;
 
                     let inference_response = match send_result {
-                        Ok(_) => {
-                            response_rx.await.unwrap_or_else(|_| {
-                                InferenceResponse {
-                                    outputs: HashMap::new(),
-                                    success: false,
-                                    message: "Inference worker failed to send response".to_string(),
-                                    duration_ms: 0,
-                                }
-                            })
-                        }
+                        Ok(_) => response_rx.await.unwrap_or_else(|_| InferenceResponse {
+                            outputs: HashMap::new(),
+                            success: false,
+                            message: "Inference worker failed to send response".to_string(),
+                            duration_ms: 0,
+                        }),
                         Err(e) => {
                             eprintln!("Failed to send inference request to worker: {}", e);
                             InferenceResponse {
                                 outputs: HashMap::new(),
                                 success: false,
-                                message: "Server internal error: inference worker unavailable".to_string(),
+                                message: "Server internal error: inference worker unavailable"
+                                    .to_string(),
                                 duration_ms: 0,
                             }
                         }

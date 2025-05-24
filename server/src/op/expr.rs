@@ -129,7 +129,7 @@ fn neg_parser(input: &str) -> IResult<&str, Expr> {
         Expr {
             op: ExprOp::Neg,
             children: vec![child],
-        }
+        },
     ))
 }
 

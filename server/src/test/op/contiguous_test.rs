@@ -8,7 +8,7 @@ use crate::op::dtype::TensorValue;
 fn test_contiguous_forward() -> Result<()> {
     // 1. Build operator configuration
     // TODO: Replace with actual configuration for ContiguousConf if it takes parameters
-    let conf = ContiguousConf {}; 
+    let conf = ContiguousConf {};
 
     // 2. Create operator layer
     let mut layer = conf.to_layer()?;
@@ -31,7 +31,10 @@ fn test_contiguous_forward() -> Result<()> {
         // Example: Asserting some values. Adjust as needed.
         // This assumes contiguous might just return the same tensor if already contiguous
         // or a new contiguous tensor with the same data.
-        assert_eq!(output_tensor.iter().copied().collect::<Vec<_>>(), vec![1.0, 2.0, 3.0, 4.0]);
+        assert_eq!(
+            output_tensor.iter().copied().collect::<Vec<_>>(),
+            vec![1.0, 2.0, 3.0, 4.0]
+        );
     } else {
         panic!("Expected Float32 output tensor");
     }

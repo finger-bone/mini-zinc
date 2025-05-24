@@ -59,7 +59,10 @@ impl ToLayer for conf::ReLUConf {
             lconf,
             pro_que: ProQue::builder()
                 .dims(256)
-                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./relu.cl")))
+                .src(format!(
+                    "#define TILE_SIZE 32\n{}",
+                    include_str!("./relu.cl")
+                ))
                 .build()
                 .unwrap(),
         }))

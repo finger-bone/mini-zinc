@@ -104,9 +104,7 @@ pub fn smollm() {
     let mut model = ComputationGraph::from_pnnx(model_param, model_weight).unwrap();
     let mut input_tokens = vec![0; 1 * 32];
     // 101, 1996, 3007, 1997, 2605, 2003, 1026, 7308, 1028, 1012,  102
-    let actual_tokens = vec![
-        504, 3575,  282, 3275,  314
-    ];
+    let actual_tokens = vec![504, 3575, 282, 3275, 314];
     let mut attention_mask = vec![0; 1 * 32];
     for (i, v) in actual_tokens.iter().enumerate() {
         input_tokens[i] = *v;

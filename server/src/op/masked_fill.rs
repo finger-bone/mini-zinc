@@ -5,8 +5,8 @@ use super::{
 use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
-use ocl::ProQue;
 use ndarray::parallel::prelude::*;
+use ocl::ProQue;
 
 pub struct MaskedFillLayer {
     pub lconf: conf::MaskedFillConf,

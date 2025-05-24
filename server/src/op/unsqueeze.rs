@@ -33,11 +33,21 @@ impl Forward for UnsqueezeLayer {
         }
         let new_shape = IxDyn(&shape);
         let output = match input_tensor {
-            TensorValue::Float32(arr) => TensorValue::Float32(arr.clone().to_shape(new_shape)?.to_owned()),
-            TensorValue::Int64(arr) => TensorValue::Int64(arr.clone().to_shape(new_shape)?.to_owned()),
-            TensorValue::Boolean(arr) => TensorValue::Boolean(arr.clone().to_shape(new_shape)?.to_owned()),
-            TensorValue::BFloat16(arr) => TensorValue::BFloat16(arr.clone().to_shape(new_shape)?.to_owned()),
-            TensorValue::Float16(arr) => TensorValue::Float16(arr.clone().to_shape(new_shape)?.to_owned()),
+            TensorValue::Float32(arr) => {
+                TensorValue::Float32(arr.clone().to_shape(new_shape)?.to_owned())
+            }
+            TensorValue::Int64(arr) => {
+                TensorValue::Int64(arr.clone().to_shape(new_shape)?.to_owned())
+            }
+            TensorValue::Boolean(arr) => {
+                TensorValue::Boolean(arr.clone().to_shape(new_shape)?.to_owned())
+            }
+            TensorValue::BFloat16(arr) => {
+                TensorValue::BFloat16(arr.clone().to_shape(new_shape)?.to_owned())
+            }
+            TensorValue::Float16(arr) => {
+                TensorValue::Float16(arr.clone().to_shape(new_shape)?.to_owned())
+            }
         };
         Ok(vec![output])
     }
