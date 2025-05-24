@@ -40,16 +40,7 @@ impl Forward for RSMNormLayer {
             .len(gamma.len())
             .copy_host_slice(gamma.as_slice().unwrap())
             .build()?;
-        let beta = match &self.lconf.bias {
-            TensorValue::Float32(beta) => beta,
-            _ => return Err(anyhow!("Unsupported beta type for RSMNorm")),
-        };
-        let beta_buffer = self
-            .pro_que
-            .buffer_builder::<f32>()
-            .len(beta.len())
-            .copy_host_slice(beta.as_slice().unwrap())
-            .build()?;
+
         let batch = input_shape[0] as i32;
         let inner = input_shape[1..input_shape.len() - 1].iter().product::<usize>() as i32;
         let channel = input_shape[input_shape.len() - 1] as i32;
@@ -60,7 +51,6 @@ impl Forward for RSMNormLayer {
             .arg(&input_buffer)
             .arg(&output_buffer)
             .arg(&gamma_buffer)
-            .arg(&beta_buffer)
             .arg(batch)
             .arg(inner)
             .arg(channel)

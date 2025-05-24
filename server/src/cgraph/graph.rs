@@ -263,10 +263,8 @@ impl ComputationGraph {
                             }
                         }
                     }
-
                     // 执行前向计算
                     let output_tensors = layer.forward(&input_tensors)?;
-
                     // 存储输出并更新依赖图
                     for i in 0..node.outputs.len() {
                         let output_idx = node.outputs[i];

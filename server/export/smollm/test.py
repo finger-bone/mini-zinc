@@ -26,6 +26,7 @@ text = "The capital of China is"
 dummy_input = tokenizer(text, return_tensors="pt", padding="max_length", max_length=32, truncation=True)
 
 input_ids = dummy_input["input_ids"].to(device)
+print(input_ids)
 attention_mask = dummy_input["attention_mask"].to(device)
 
 # 推理 + 时间统计
@@ -33,7 +34,8 @@ start = time.time()
 wrapped = Wrapper(model).to(device)
 logits = wrapped(input_ids, attention_mask)
 end = time.time()
-
+flattened_logits = logits.view(-1)
+print("👉 展平后第一个数字:", flattened_logits[0].item())
 # 获取最后一个位置的预测 token
 last_token_index = attention_mask.sum(dim=1) - 1
 next_token_logits = logits[0, last_token_index, :]  # shape: [vocab_size]

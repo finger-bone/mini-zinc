@@ -14,6 +14,12 @@ impl Forward for UnsqueezeLayer {
     fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         let input_tensor = &input[0];
         let mut axes = self.lconf.axes.clone();
+        // convert negative axis to positive axis
+        for i in 0..axes.len() {
+            if axes[i] < 0 {
+                axes[i] = axes[i] + input_tensor.shape().len() as isize + 1;
+            }
+        }
         axes.sort();
         let mut shape = match input_tensor {
             TensorValue::Float32(arr) => arr.shape().to_vec(),

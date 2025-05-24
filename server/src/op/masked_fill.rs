@@ -6,6 +6,7 @@ use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
 use ocl::ProQue;
+use ndarray::parallel::prelude::*;
 
 pub struct MaskedFillLayer {
     pub lconf: conf::MaskedFillConf,
@@ -35,8 +36,7 @@ impl Forward for MaskedFillLayer {
             .len(size)
             .copy_host_slice(data.as_slice().unwrap())
             .build()?;
-        let mask_bool = mask.as_slice().unwrap(); // Original boolean slice
-        let mask_u8: Vec<u8> = mask_bool.iter().map(|&b| if b { 1 } else { 0 }).collect();
+        let mask_u8 = mask.par_iter().map(|&x| x as u8).collect::<Vec<u8>>();
         let mask_buffer = self
             .pro_que
             .buffer_builder::<u8>()

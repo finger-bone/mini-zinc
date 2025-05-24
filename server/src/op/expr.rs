@@ -158,6 +158,7 @@ impl Forward for ExprLayer {
             .iter()
             .map(|v| match v {
                 TensorValue::Float32(arr) => arr.clone(),
+                TensorValue::Int64(arr) => arr.clone().mapv(|v| v as f32),
                 _ => panic!("Unsupported input type for Expr"),
             })
             .collect::<Vec<_>>();

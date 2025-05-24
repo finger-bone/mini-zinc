@@ -94,41 +94,41 @@ pub fn simple_bert() {
     }
 }
 
-// #[test]
-// pub fn smollm() {
-//     // let resnet_param = "export/test_resnet/test_resnet.pnnx.param";
-//     // let resnet_weight = "export/test_resnet/test_resnet.pnnx.bin";
-//     let resnet_param = "export/smollm/smollm.pnnx.param";
-//     let resnet_weight = "export/smollm/smollm.pnnx.bin";
+#[test]
+pub fn smollm() {
+    // let resnet_param = "export/test_resnet/test_resnet.pnnx.param";
+    // let resnet_weight = "export/test_resnet/test_resnet.pnnx.bin";
+    let model_param = "export/smollm/smollm.pnnx.param";
+    let model_weight = "export/smollm/smollm.pnnx.bin";
 
-//     let resnet = ComputationGraph::from_pnnx(resnet_param, resnet_weight).unwrap();
-//     let mut input_tokens = vec![0; 1 * 32];
-//     // 101, 1996, 3007, 1997, 2605, 2003, 1026, 7308, 1028, 1012,  102
-//     let actual_tokens = vec![
-//         101, 1996, 3007, 1997, 2605, 2003, 1026, 7308, 1028, 1012, 102,
-//     ];
-//     let mut attention_mask = vec![0; 1 * 32];
-//     for (i, v) in actual_tokens.iter().enumerate() {
-//         input_tokens[i] = *v;
-//         attention_mask[i] = 1;
-//     }
-//     let input = HashMap::from([
-//         (
-//             0 as usize,
-//             TensorValue::Int64(ArrayD::from_shape_vec(vec![1, 32], input_tokens).unwrap()),
-//         ),
-//         (
-//             1 as usize,
-//             TensorValue::Int64(ArrayD::from_shape_vec(vec![1, 32], attention_mask).unwrap()),
-//         ),
-//     ]);
-//     let result = resnet.compute(&input).unwrap();
+    let mut model = ComputationGraph::from_pnnx(model_param, model_weight).unwrap();
+    let mut input_tokens = vec![0; 1 * 32];
+    // 101, 1996, 3007, 1997, 2605, 2003, 1026, 7308, 1028, 1012,  102
+    let actual_tokens = vec![
+        504, 3575,  282, 3275,  314
+    ];
+    let mut attention_mask = vec![0; 1 * 32];
+    for (i, v) in actual_tokens.iter().enumerate() {
+        input_tokens[i] = *v;
+        attention_mask[i] = 1;
+    }
+    let input = HashMap::from([
+        (
+            0 as usize,
+            TensorValue::Int64(ArrayD::from_shape_vec(vec![1, 32], input_tokens).unwrap()),
+        ),
+        (
+            1 as usize,
+            TensorValue::Int64(ArrayD::from_shape_vec(vec![1, 32], attention_mask).unwrap()),
+        ),
+    ]);
+    let result = model.compute(&input).unwrap();
 
-//     for (k, v) in result {
-//         eprintln!("{}", k);
-//         if let TensorValue::Float32(v) = v {
-//             eprintln!("{:#?}", v.shape());
-//             eprintln!("{:#?}", v.as_slice().unwrap()[0]);
-//         }
-//     }
-// }
+    for (k, v) in result {
+        eprintln!("{}", k);
+        if let TensorValue::Float32(v) = v {
+            eprintln!("{:#?}", v.shape());
+            eprintln!("{:#?}", v.as_slice().unwrap()[0]);
+        }
+    }
+}

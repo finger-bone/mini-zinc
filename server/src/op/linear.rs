@@ -5,14 +5,11 @@ use super::{
 use crate::op::dtype::TensorValue;
 use anyhow::{Ok, Result};
 use ndarray::ArrayD;
-use ocl::{ProQue, Buffer}; // Import Buffer
+use ocl::ProQue;
 
 pub struct LinearLayer {
     pub lconf: conf::LinearConf,
     pub pro_que: ProQue,
-    // Add buffers for pre-loaded weights and biases
-    weights_buffer: Buffer<f32>,
-    bias_buffer: Buffer<f32>,
 }
 
 impl Forward for LinearLayer {
@@ -59,8 +56,7 @@ impl Forward for LinearLayer {
             .build()
             .unwrap();
 
-        // Create input buffer - this still needs to be created per-forward pass
-        // as the input data changes.
+        // Create input buffer
         let input_buffer = self
             .pro_que
             .buffer_builder::<f32>()
@@ -68,10 +64,45 @@ impl Forward for LinearLayer {
             .copy_host_slice(flattened_input.as_slice().unwrap())
             .build()
             .unwrap();
+        
+        let weights = match &self.lconf.weights {
+            TensorValue::Float32(weights) => {
+                assert_eq!(
+                    weights.shape(),
+                    &[self.lconf.out_features, self.lconf.in_features]
+                );
+                weights
+            }
+            _ => return Err(anyhow::anyhow!("Unsupported weights type for Linear")),
+        };
+        // Create weights buffer
+        let weights_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
+            .len(weights.len())
+            .copy_host_slice(weights.as_slice().unwrap())
+            .build()
+            .unwrap();
 
-        // Weights and bias buffers are now members of the struct,
-        // so we don't need to create them here.
-        // We just need to ensure they are passed as arguments.
+        let bias = match &self.lconf.bias {
+                Some(TensorValue::Float32(bias)) => bias,
+                None => {
+                    // If bias is None, create a zero-filled tensor
+                    let zero_bias = ArrayD::zeros(ndarray::IxDyn(&[
+                        batch_size * self.lconf.out_features,
+                    ]));
+                    &zero_bias.clone()
+                },
+                _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
+            };
+        // Create bias buffer
+        let bias_buffer = self
+            .pro_que
+            .buffer_builder::<f32>()
+            .len(bias.len())
+            .copy_host_slice(bias.as_slice().unwrap())
+            .build()
+            .unwrap();
 
         // Build and execute kernel
         let kernel = self
@@ -80,8 +111,8 @@ impl Forward for LinearLayer {
             .global_work_size([batch_size * self.lconf.out_features as usize])
             .arg(&input_buffer)
             .arg(&output_buffer)
-            .arg(&self.weights_buffer) // Use pre-loaded weights buffer
-            .arg(&self.bias_buffer)    // Use pre-loaded bias buffer
+            .arg(&weights_buffer)
+            .arg(&bias_buffer)
             .arg(batch_size as i32)
             .arg(self.lconf.in_features as i32)
             .arg(self.lconf.out_features as i32)
@@ -115,52 +146,13 @@ impl Forward for LinearLayer {
 impl ToLayer for conf::LinearConf {
     fn to_layer(self) -> Result<Box<dyn Forward>> {
         let lconf: conf::LinearConf = self;
-
-        // Initialize ProQue once
-        let pro_que = ProQue::builder()
-            .dims(512)
-            .src(format!("#define TILE_SIZE 32\n{}", include_str!("./linear.cl")))
-            .build()
-            .unwrap();
-
-        // Extract weights and bias from lconf and ensure they are Float32
-        let weights = match &lconf.weights {
-            TensorValue::Float32(weights) => {
-                assert_eq!(
-                    weights.shape(),
-                    &[lconf.out_features, lconf.in_features]
-                );
-                weights
-            }
-            _ => return Err(anyhow::anyhow!("Unsupported weights type for Linear")),
-        };
-
-        let bias = match &lconf.bias {
-            TensorValue::Float32(bias) => bias,
-            _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
-        };
-
-        // Create weights buffer and copy data to GPU
-        let weights_buffer = pro_que
-            .buffer_builder::<f32>()
-            .len(weights.len())
-            .copy_host_slice(weights.as_slice().unwrap())
-            .build()
-            .unwrap();
-
-        // Create bias buffer and copy data to GPU
-        let bias_buffer = pro_que
-            .buffer_builder::<f32>()
-            .len(bias.len())
-            .copy_host_slice(bias.as_slice().unwrap())
-            .build()
-            .unwrap();
-
         Ok(Box::new(LinearLayer {
             lconf,
-            pro_que,
-            weights_buffer, // Assign pre-loaded buffer
-            bias_buffer,    // Assign pre-loaded buffer
+            pro_que: ProQue::builder()
+                .dims(512)
+                .src(format!("#define TILE_SIZE 32\n{}", include_str!("./linear.cl")))
+                .build()
+                .unwrap(),
         }))
     }
 }

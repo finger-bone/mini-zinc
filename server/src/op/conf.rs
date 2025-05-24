@@ -53,14 +53,13 @@ pub struct LinearConf {
     pub in_features: usize,
     pub out_features: usize,
     pub weights: TensorValue,
-    pub bias: TensorValue,
+    pub bias: Option<TensorValue>,
 }
 
 pub struct LinearWithWeightsInputConf {
     pub in_features: usize,
     pub out_features: usize,
-    pub weights: TensorValue,
-    pub bias: TensorValue,
+    pub bias: Option<TensorValue>,
 }
 
 pub struct ViewConf {
@@ -90,7 +89,6 @@ pub struct RSMNormConf {
     pub eps: f32,
     pub elementwise_affine: bool,
     pub weight: TensorValue,
-    pub bias: TensorValue,
 }
 
 pub struct GeLUConf {}
@@ -133,9 +131,20 @@ pub trait ToLayer {
 }
 
 pub struct UnsqueezeConf {
-    pub axes: Vec<usize>,
+    pub axes: Vec<isize>,
 }
 
 pub struct CatConf {
     pub dim: isize,
+}
+
+pub struct ContiguousConf {}
+
+pub struct ScalerEqConf {
+    pub other: f32,
+}
+
+pub struct TensorSplitConf {
+    pub dim: isize,
+    pub indices: Vec<usize>,
 }

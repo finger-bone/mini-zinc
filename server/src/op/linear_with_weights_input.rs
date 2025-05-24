@@ -86,8 +86,19 @@ impl Forward for LinearLayerWithWeightsInput {
             .build()
             .unwrap();
 
+        // let bias = match &self.lconf.bias {
+        //     TensorValue::Float32(bias) => bias,
+        //     _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
+        // };
         let bias = match &self.lconf.bias {
-            TensorValue::Float32(bias) => bias,
+            Some(TensorValue::Float32(bias)) => bias,
+            None => {
+                // If bias is None, create a zero-filled tensor
+                let zero_bias = ArrayD::zeros(ndarray::IxDyn(&[
+                    batch_size * self.lconf.out_features,
+                ]));
+                &zero_bias.clone()
+            },
             _ => return Err(anyhow::anyhow!("Unsupported bias type for Linear")),
         };
         // Create bias buffer

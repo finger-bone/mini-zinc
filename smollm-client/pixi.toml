@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Zend <zendwang040302@outlook.com>"]
+channels = ["conda-forge"]
+name = "smollm-client"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.13.3,<3.14"
+
+[pypi-dependencies]
+transformers = ">=4.52.3, <5"
+requests = ">=2.32.3, <3"
+torch = ">=2.7.0, <3"

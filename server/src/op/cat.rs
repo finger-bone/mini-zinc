@@ -8,11 +8,15 @@ pub struct CatLayer {
 }
 
 impl Forward for CatLayer {
-    fn forward(&self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
+    fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         if input.is_empty() {
             return Err(anyhow::anyhow!("Cat 算子至少需要一个输入张量"));
         }
-        let dim = self.lconf.dim;
+        let dim = if self.lconf.dim < 0 {
+            (self.lconf.dim + input[0].shape().len() as isize) as usize
+        } else {
+            self.lconf.dim as usize
+        };
         let first_dtype = input[0].dtype();
         for tensor in input.iter() {
             if tensor.dtype() != first_dtype {
