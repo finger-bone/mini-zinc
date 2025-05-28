@@ -12,7 +12,7 @@ pub struct ViewLayer {
 impl Forward for ViewLayer {
     fn forward(&mut self, input: &Vec<TensorValue>) -> Result<Vec<TensorValue>> {
         // Only process the first element
-        let input_tensor = &input[0];
+        let input_tensor = &input[0].clone();
 
         // Common function to check size and reshape
         let check_and_reshape = |shape: &[usize]| {
