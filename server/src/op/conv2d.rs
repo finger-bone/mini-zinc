@@ -72,7 +72,21 @@ impl Forward for Conv2dLayer {
             .unwrap();
 
         let bias = match &self.lconf.bias {
-            TensorValue::Float32(bias) => bias,
+            Some(TensorValue::Float32(bias)) => bias,
+            None => {
+                // 自动生成全零bias
+                let bias_shape = vec![self.lconf.filters];
+                use ndarray::ArrayD;
+                use crate::op::dtype::TensorValue;
+                let zeros = ArrayD::zeros(bias_shape);
+                // 这里返回引用，需临时变量
+                self.lconf.bias = Some(TensorValue::Float32(zeros));
+                if let Some(TensorValue::Float32(bias)) = &self.lconf.bias {
+                    bias
+                } else {
+                    panic!("Failed to create zero bias for Conv2d")
+                }
+            },
             _ => panic!("Unsupported bias type for Conv2d"),
         };
 

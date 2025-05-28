@@ -66,3 +66,11 @@ pub fn parse_dtype(input: &str) -> IResult<&str, DataType> {
     )
     .parse(input)
 }
+
+pub fn parse_f32_tuple(input: &str) -> IResult<&str, Vec<f32>> {
+    delimited(
+        tag("("),
+        separated_list0(tag(","), parse_f32),
+        tag(")"),
+    ).parse(input)
+}

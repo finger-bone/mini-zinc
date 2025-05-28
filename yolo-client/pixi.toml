@@ -1,0 +1,17 @@
+[workspace]
+authors = ["Zend <zendwang040302@outlook.com>"]
+channels = ["conda-forge"]
+name = "yolo-client"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.13.3,<3.14"
+
+[pypi-dependencies]
+streamlit = ">=1.45.1, <2"
+pillow = ">=11.2.1, <12"
+torch = ">=2.7.0, <3"
+torchvision = ">=0.22.0, <0.23"

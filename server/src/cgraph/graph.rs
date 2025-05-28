@@ -35,6 +35,7 @@ impl ComputationGraph {
 
         for (idx, line) in param_result.lines.iter().enumerate() {
             let node = CGNode::from_line(line, &weights).unwrap();
+            // eprintln!("node {}: {:?}", idx, node);
             match &node.op {
                 CGNodeOp::Input => {
                     input_nodes.push(idx);

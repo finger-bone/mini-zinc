@@ -28,6 +28,15 @@ fn start_smollm() -> Result<()> {
     server.start(3030)
 }
 
+fn start_yolo() -> Result<()> {
+    // 模型路径
+    let yolo_param = "export/yolo/yolov5nu.pnnx.param";
+    let yolo_weight = "export/yolo/yolov5nu.pnnx.bin";
+    let server = InferenceServer::new(yolo_param, yolo_weight)?;
+    // 启动服务器（阻塞）
+    server.start(3030)
+}
+
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     println!("- 推理接口: http://127.0.0.1:3030/infer (POST请求)");
@@ -38,8 +47,14 @@ fn main() -> Result<()> {
     } else if args.len() > 1 && args[1] == "smollm" {
         println!("- 启动SMOLLM模型");
         start_smollm()
-    } else {
+    } else if args.len() > 1 && args[1] == "yolo" {
+        println!("- 启动YOLO模型");
+        start_yolo()
+    } else if args.len() > 1 && args[1] == "resnet" {
         println!("- 启动ResNet模型");
         start_resnet()
+    } else {
+        println!("请输入模型名称: resnet, bert, smollm, yolo");
+        Ok(())
     }
 }

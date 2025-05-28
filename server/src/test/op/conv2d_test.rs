@@ -28,7 +28,7 @@ fn test_conv_forward() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![2, 1, 3, 3], vec![0.1; 18]).unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap()),
+        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap())),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -69,7 +69,7 @@ fn test_conv_stride() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![2, 1, 3, 3], vec![0.1; 18]).unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap()),
+        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap())),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -107,7 +107,7 @@ fn test_conv_dilation() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![1, 1, 3, 3], vec![0.1; 9]).unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![1], vec![0.1]).unwrap()),
+        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![1], vec![0.1]).unwrap())),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -145,7 +145,7 @@ fn test_conv_groups() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![4, 2, 3, 3], vec![0.1; 72]).unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![4], vec![0.1; 4]).unwrap()),
+        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![4], vec![0.1; 4]).unwrap())),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -183,7 +183,7 @@ fn test_conv_no_padding() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![2, 1, 3, 3], vec![0.1; 18]).unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap()),
+        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![2], vec![0.1; 2]).unwrap())),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -226,7 +226,7 @@ fn test_conv2d_value() {
         dilation: vec![1, 1],
         groups: 1,
         weights,
-        bias,
+        bias: Some(bias),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -277,7 +277,7 @@ fn test_conv_multi_channel() {
         weights: TensorValue::Float32(
             ArrayD::from_shape_vec(vec![3, 2, 3, 3], vec![0.1; 3 * 2 * 3 * 3]).unwrap(),
         ),
-        bias: TensorValue::Float32(ArrayD::from_shape_vec(vec![3], vec![0.0; 3]).unwrap()),
+        bias: Some(TensorValue::Float32(ArrayD::from_shape_vec(vec![3], vec![0.0; 3]).unwrap())),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -305,9 +305,9 @@ fn test_conv_all_zeros_input() {
         weights: TensorValue::Float32(
             ArrayD::ones(vec![1, 3, 3, 3]), // 权重全1
         ),
-        bias: TensorValue::Float32(
+        bias: Some(TensorValue::Float32(
             ArrayD::ones(vec![1]), // bias全1
-        ),
+        )),
     };
 
     let mut layer = conv.to_layer().unwrap();
@@ -319,5 +319,26 @@ fn test_conv_all_zeros_input() {
         for &val in output_array.iter() {
             assert!((val - 1.0).abs() < 1e-5);
         }
+    }
+}
+
+// 新增测试：bias为None时自动生成全零bias
+#[test]
+fn test_conv_bias_none() {
+    let input = TensorValue::Float32(ArrayD::ones(vec![1, 2, 3, 3]));
+    let conv = Conv2dConf {
+        kernel_size: vec![3, 3],
+        stride: vec![1, 1],
+        padding: vec![1, 1],
+        filters: 2,
+        dilation: vec![1, 1],
+        groups: 1,
+        weights: TensorValue::Float32(ArrayD::ones(vec![2, 2, 3, 3])),
+        bias: None,
+    };
+    let mut layer = conv.to_layer().unwrap();
+    let output = layer.forward(&vec![input]).unwrap();
+    if let TensorValue::Float32(output_array) = &output[0] {
+        assert_eq!(output_array.shape(), &[1, 2, 3, 3]);
     }
 }

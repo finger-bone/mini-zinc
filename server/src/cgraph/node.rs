@@ -10,11 +10,7 @@ use crate::{
     },
     op::{
         conf::{
-            AdaptivePool2dConf, CatConf, ContiguousConf, Conv2dConf, EmbeddingConf, ExpandConf,
-            ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf,
-            MaskedFillConf, Pool2dConf, PoolType, RSMNormConf, ReLUConf,
-            ScaledDotProductAttentionConf, ScalerEqConf, SiLUConf, TensorSplitConf, TensorToConf,
-            TransposeConf, UnsqueezeConf, ViewConf,
+            AdaptivePool2dConf, CatConf, ContiguousConf, Conv2dConf, EmbeddingConf, ExpandConf, ExprConf, FlattenConf, GeLUConf, LayerNormConf, LinearConf, LinearWithWeightsInputConf, MaskedFillConf, Pool2dConf, PoolType, RSMNormConf, ReLUConf, ScaledDotProductAttentionConf, ScalerEqConf, SiLUConf, SigmoidConf, SoftmaxConf, TensorSplitConf, TensorToConf, TransposeConf, UnsqueezeConf, UpSampleConf, UpSampleMode, ViewConf
         },
         layer::Forward,
     },
@@ -25,7 +21,7 @@ use crate::op::dtype::TensorValue;
 use crate::op::conf::ToLayer;
 
 use super::pnnx_value_parser::{
-    parse_bool, parse_dtype, parse_f32, parse_isize, parse_usize_tuple,
+    parse_bool, parse_dtype, parse_f32, parse_f32_tuple, parse_isize, parse_usize_tuple
 };
 
 pub enum CGNodeOp {
@@ -112,7 +108,10 @@ impl CGNode {
                 let (_, stride) = parse_usize_tuple
                     .parse(line.get("stride", PNNXKVType::Attr).unwrap().value.as_str())
                     .unwrap();
-
+                let bias = match weights.get(&line.get_tensor_key("bias")) {
+                    Some(tensor) => Some(tensor.clone()),
+                    None => None,
+                };
                 Ok(CGNodeOp::Op(
                     Conv2dConf {
                         dilation,
@@ -122,7 +121,7 @@ impl CGNode {
                         groups,
                         filters: out_channels,
                         weights: weights.get(&line.get_tensor_key("weight")).unwrap().clone(),
-                        bias: weights.get(&line.get_tensor_key("bias")).unwrap().clone(),
+                        bias,
                     }
                     .to_layer()
                     .unwrap(),
@@ -403,6 +402,95 @@ impl CGNode {
                 Ok(CGNodeOp::Op(
                     TensorSplitConf { dim, indices }.to_layer().unwrap(),
                 ))
+            }
+            // torch.split              torch.split_28           1 2 6 7 8 dim=1 split_size_or_sections=(32,32) $tensor=6 #6=(1,64,160,160)f32 #7=(1,32,160,160)f32 #8=(1,32,160,160)f32
+            // 翻译成 tensor split 算子，但是需要把 split_size_or_sections 转换成 indices
+            "torch.split" => {
+                let (_, split_size_or_sections) = parse_usize_tuple
+                   .parse(&line.get("split_size_or_sections", PNNXKVType::Attr).unwrap().value)
+                   .unwrap();
+                let (_, dim) = parse_isize
+                   .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
+                  .unwrap();
+                let mut indices = vec![];
+                let mut sum = 0;
+                for i in split_size_or_sections {
+                  sum += i;
+                  indices.push(sum);
+                }
+                Ok(CGNodeOp::Op(
+                  TensorSplitConf { dim, indices }.to_layer().unwrap(),
+                ))
+            }
+            // torch.chunk              torch.chunk_27           1 2 175 178 179 chunks=2 dim=1 $input=175 #175=(1,4,8400)f32 #178=(1,2,8400)f32 #179=(1,2,8400)f32
+            // chunk 翻译成  tensor split
+            "torch.chunk" => {
+                let (_, chunks) = parse_usize
+                   .parse(&line.get("chunks", PNNXKVType::Attr).unwrap().value)
+                   .unwrap();
+                let (_, dim) = parse_isize
+                   .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
+                  .unwrap();
+                let input_id = &line.get("input", PNNXKVType::Input).unwrap().value;
+                let (_, input_shape) = parse_usize_tuple.parse(
+                    &line.get(&input_id, PNNXKVType::Shape).unwrap().value
+                ).unwrap();
+                // get the dim at dim
+                let dim = if dim < 0 {
+                    (input_shape.len() as isize + dim) as usize
+                } else {
+                    dim as usize
+                };
+                let chunk_size = input_shape[dim] / chunks;
+                let indicies = (1..chunks).map(|i| i * chunk_size).collect::<Vec<_>>();
+                Ok(CGNodeOp::Op(
+                  TensorSplitConf { dim: dim as isize, indices: indicies }.to_layer().unwrap(),
+                ))
+            }
+            // F.sigmoid
+            "F.sigmoid" => Ok(CGNodeOp::Op(SigmoidConf {}.to_layer().unwrap())),
+            // nn.Upsample              model.10                 1 1 76 77 mode=nearest scale_factor=(2.000000e+00,2.000000e+00) size=None #76=(1,512,20,20)f32 #77=(1,512,40,40)f32
+            "nn.Upsample" => {
+                let mode = match line.get("mode", PNNXKVType::Attr).unwrap().value.as_str() {
+                    "nearest" => UpSampleMode::Nearest,
+                    _ => panic!("unsupported upsample mode"),
+                };
+                let (_, scale_factor) = parse_f32_tuple.parse(
+                    &line
+                        .get("scale_factor", PNNXKVType::Attr)
+                        .unwrap()
+                        .value,
+                ).unwrap();
+                let size = match line.get("size", PNNXKVType::Attr).unwrap().value.as_str() {
+                    "None" => None,
+                    _ => {
+                        let (_, size) = parse_usize_tuple.parse(
+                            &line
+                                .get("size", PNNXKVType::Attr)
+                                .unwrap()
+                                .value,
+                        ).unwrap();
+                        Some(size)
+                    }
+                };
+
+                
+                Ok(CGNodeOp::Op(
+                    UpSampleConf {
+                        mode,
+                        scale_factor: Some(scale_factor),
+                        size,
+                    }.to_layer().unwrap(),
+                ))
+            }
+            // F.softmax                F.softmax_40             1 1 172 173 dim=1 $input=172 #172=(1,16,4,8400)f32 #173=(1,16,4,8400)f32
+            "F.softmax" => {
+                let (_, dim) = parse_isize
+                   .parse(&line.get("dim", PNNXKVType::Attr).unwrap().value)
+                   .unwrap();
+                Ok(CGNodeOp::Op(SoftmaxConf { 
+                    axis: dim,
+                 }.to_layer().unwrap()))
             }
             // nn.RMSNorm               rmsnorm_3                1 1 96 97 elementwise_affine=True eps=1.000000e-05 normalized_shape=(576) @weight=(576)f32 $input=96 #96=(1,32,576)f32 #97=(1,32,576)f32
             "nn.RMSNorm" => {

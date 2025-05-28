@@ -26,3 +26,6 @@ pub mod tensor_to;
 pub mod transpose;
 pub mod unsqueeze;
 pub mod view;
+pub mod upsample;
+pub mod sigmoid;
+pub mod softmax;

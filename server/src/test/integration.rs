@@ -130,3 +130,33 @@ pub fn smollm() {
         }
     }
 }
+
+#[test]
+pub fn yolo() {
+    let model_param = "export/yolo/yolov5nu.pnnx.param";
+    let model_weight = "export/yolo/yolov5nu.pnnx.bin";
+    let mut model = ComputationGraph::from_pnnx(model_param, model_weight).unwrap();
+    let input = HashMap::from([(
+        0 as usize,
+        TensorValue::Float32(
+            ArrayD::from_shape_vec(
+                vec![1, 3, 640, 640],
+                vec![
+                    0.0;
+                    1 * 3 * 640 * 640
+                ],
+            )
+            .unwrap(),
+        ),
+    )]);
+    let result = model.compute(&input).unwrap();
+    for (k, v) in result {
+        // eprintln!("{}: {:#?}", k, v);
+        if let TensorValue::Float32(v) = v {
+            eprintln!("{}: {:#?}", k, v.shape());
+            eprintln!("{:#?}", v.as_slice().unwrap()[0]);
+            eprintln!("{:#?}", v.as_slice().unwrap()[1]);
+            eprintln!("{:#?}", v.as_slice().unwrap()[2]);
+        }
+    }
+}

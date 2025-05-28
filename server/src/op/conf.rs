@@ -12,7 +12,7 @@ pub struct SigmoidConf {}
 pub struct TanhConf {}
 
 pub struct SoftmaxConf {
-    pub axis: i32,
+    pub axis: isize,
 }
 
 pub struct BatchNormConf {
@@ -29,7 +29,7 @@ pub struct Conv2dConf {
     pub groups: usize,
     pub filters: usize,
     pub weights: TensorValue,
-    pub bias: TensorValue,
+    pub bias: Option<TensorValue>,
 }
 
 pub struct Pool2dConf {
@@ -147,4 +147,14 @@ pub struct ScalerEqConf {
 pub struct TensorSplitConf {
     pub dim: isize,
     pub indices: Vec<usize>,
+}
+
+pub enum UpSampleMode {
+    Nearest,
+}
+
+pub struct UpSampleConf {
+    pub mode: UpSampleMode, // 目前仅支持 "nearest"
+    pub scale_factor: Option<Vec<f32>>,
+    pub size: Option<Vec<usize>>,
 }

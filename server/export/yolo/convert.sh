@@ -1,0 +1,1 @@
+pnnx yolov5nu.torchscript inputshape="[1,3,640,640]" pnnxparam=yolov5nu.pnnx.param pnnxbin=yolov5nu.pnnx.bin

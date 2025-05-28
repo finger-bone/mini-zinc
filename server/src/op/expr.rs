@@ -25,6 +25,7 @@ pub enum ExprOp {
     Mul,
     Sub,
     Neg,
+    Div,
     Input(usize),
     Constant(f32),
 }
@@ -133,6 +134,23 @@ fn neg_parser(input: &str) -> IResult<&str, Expr> {
     ))
 }
 
+fn div_parser(input: &str) -> IResult<&str, Expr> {
+    let (input, _) = tag("div").parse(input)?;
+    let (input, children) = delimited(
+        char('('),
+        separated_list0(char(','), expr_parser),
+        char(')'),
+    )
+    .parse(input)?;
+    Ok((
+        input,
+        Expr {
+            op: ExprOp::Div,
+            children,
+        },
+    ))
+}
+
 // 重点：nom 8 写法，使用 `.parse(input)`
 fn expr_parser(input: &str) -> IResult<&str, Expr> {
     alt((
@@ -142,6 +160,7 @@ fn expr_parser(input: &str) -> IResult<&str, Expr> {
         mul_parser,
         sub_parser,
         neg_parser,
+        div_parser,
     ))
     .parse(input)
 }
@@ -190,6 +209,13 @@ impl Forward for ExprLayer {
                 ExprOp::Neg => {
                     let child = &expr.children[0];
                     -eval_expr(child, inputs)
+                }
+                ExprOp::Div => {
+                    let mut result = eval_expr(&expr.children[0], inputs);
+                    for child in &expr.children[1..] {
+                        result /= &eval_expr(child, inputs);
+                    }
+                    result
                 }
             }
         }
